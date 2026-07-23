@@ -27,4 +27,8 @@ public class Pose2d implements MetaField<Pose2d> {
     public String toString() {
         return String.format(Locale.US, "Pose2d(%.2f, %.2f, %.2f)", x, y, heading);
     }
+
+    public com.acmerobotics.roadrunner.Pose2d getRRPose2d() {
+        return new com.acmerobotics.roadrunner.Pose2d(x, y, heading);
+    }
 }
