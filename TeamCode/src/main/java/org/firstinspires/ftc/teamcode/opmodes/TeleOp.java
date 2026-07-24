@@ -14,14 +14,20 @@ import java.util.List;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp
 public class TeleOp extends OpMode {
-    ConfigParser engine;
+    public ConfigParser engine;
+    private String configPath = robotSettingFilePath;
+
+    public void setConfigPath(String path) {
+        this.configPath = path;
+    }
+
     @Override
     public void init() {
-        ConfigParser engine = new ConfigParser();
+        engine = new ConfigParser();
         ConfigManager.init();
-        engine.parseConfig(robotSettingFilePath);
+        engine.parseConfig(configPath);
 
-        telemetry.addLine("Reading from " + TextFileLocationBook.GENERAL_ROBOT_SETTING_FILE_NAME);
+        telemetry.addLine("Reading from " + configPath);
         telemetry.addLine("--- Config Parser Logs ---");
         List<String> logs = engine.getLogs();
         if (logs.isEmpty()) {
