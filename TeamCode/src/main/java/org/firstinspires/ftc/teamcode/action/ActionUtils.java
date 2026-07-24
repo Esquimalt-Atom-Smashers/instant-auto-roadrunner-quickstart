@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.action;
 
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.example.instantauto.actions.Action;
 import com.example.instantauto.actions.UserActionRegistry;
 
@@ -8,6 +9,48 @@ import java.util.List;
 import java.util.Locale;
 
 public class ActionUtils {
+    /**
+     * Adapts an InstantAuto Action to a RoadRunner Action.
+     * Useful for running via Actions.runBlocking(adapt(myAction)).
+     */
+    public static com.acmerobotics.roadrunner.Action adapt(final com.example.instantauto.actions.Action action) {
+        if (action instanceof WrappedRRAction) {
+            return ((WrappedRRAction) action).getRRAction();
+        }
+        return new com.acmerobotics.roadrunner.Action() {
+            @Override
+            public boolean run(TelemetryPacket packet) {
+                return action.run();
+            }
+        };
+    }
+
+    /**
+     * Wraps a RoadRunner Action into an InstantAuto Action.
+     * Useful for registering RoadRunner actions in UserActionRegistry.
+     */
+    public static com.example.instantauto.actions.Action wrap(com.acmerobotics.roadrunner.Action rrAction) {
+        return new WrappedRRAction(rrAction);
+    }
+
+    private static class WrappedRRAction implements com.example.instantauto.actions.Action {
+        private final com.acmerobotics.roadrunner.Action rrAction;
+        private final TelemetryPacket packet = new TelemetryPacket();
+
+        WrappedRRAction(com.acmerobotics.roadrunner.Action rrAction) {
+            this.rrAction = rrAction;
+        }
+
+        @Override
+        public boolean run() {
+            return rrAction.run(packet);
+        }
+
+        public com.acmerobotics.roadrunner.Action getRRAction() {
+            return rrAction;
+        }
+    }
+
     /**
      * Parses a CSV string into an array of doubles.
      * @param params The parameter object (usually a String).

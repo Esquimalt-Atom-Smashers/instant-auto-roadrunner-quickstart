@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import static org.firstinspires.ftc.teamcode.TextFileLocationBook.robotSettingFilePath;
+
 import com.example.instantauto.configs.ConfigParser;
 import com.example.instantauto.configs.MetaFieldRegistry;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -13,7 +15,6 @@ import java.util.List;
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp
 public class TeleOp extends OpMode {
     ConfigParser engine;
-    final String robotSettingFilePath = TextFileLocationBook.FILE_LOCATION + "/" + TextFileLocationBook.GENERAL_ROBOT_SETTING_FILE_NAME;
     @Override
     public void init() {
         ConfigParser engine = new ConfigParser();
@@ -24,17 +25,19 @@ public class TeleOp extends OpMode {
         telemetry.addLine("--- Config Parser Logs ---");
         List<String> logs = engine.getLogs();
         if (logs.isEmpty()) {
-            System.out.println("No errors found.");
+            telemetry.addLine("No errors found.");
         } else {
             for (String log : logs) {
-                System.out.println("[ERROR] " + log);
+                telemetry.addLine("[ERROR] " + log);
             }
         }
+        telemetry.update();
     }
 
     @Override
     public void loop() {
         dumpAllFields();
+        telemetry.update();
     }
 
     private void printField(String name) {

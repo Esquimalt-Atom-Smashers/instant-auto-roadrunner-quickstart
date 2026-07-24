@@ -19,7 +19,7 @@ public class ConfigManager {
 
         // New required fields for Auto
         registerField("Title", String.class, "");
-        registerField("Starting", String.class, "");
+        registerField("Starting", Pose2d.class, new Pose2d(0,0,0));
 
         // Register custom conditions
         registerCondition("is_active", () -> true);
