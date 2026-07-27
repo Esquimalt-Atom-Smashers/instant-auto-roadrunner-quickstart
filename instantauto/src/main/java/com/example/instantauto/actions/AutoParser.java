@@ -33,7 +33,7 @@ public class AutoParser {
 
         if (listOfFiles != null) {
             for (File file : listOfFiles) {
-                if (file.isFile() && file.getName().startsWith("[ACTIVE]")) {
+                if (file.isFile() && file.getName().startsWith("ACTIVE")) {
                     activeAutos.add(file);
                 }
             }

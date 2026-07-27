@@ -32,7 +32,7 @@ public class TextFileAutos {
 
     private static OpModeMeta metaForClass(String autoFileName) {
         return new OpModeMeta.Builder()
-                .setName(autoFileName.replace("[ACTIVE]", ""))
+                .setName(autoFileName.replace("ACTIVE", ""))
                 .setGroup(GROUP)
                 .setFlavor(OpModeMeta.Flavor.AUTONOMOUS)
                 .build();
