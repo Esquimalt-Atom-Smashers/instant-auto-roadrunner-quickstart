@@ -16,6 +16,7 @@ import org.firstinspires.ftc.teamcode.configs.ConfigManager;
 import org.firstinspires.ftc.teamcode.roadrunner.*;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AutonomousBase extends OpMode {
@@ -28,17 +29,23 @@ public class AutonomousBase extends OpMode {
     public AutonomousBase(AutoParser autoParser, File autoFile) {
         this.autoParser = autoParser;
         this.autoFile = autoFile;
+        actions = new ArrayList<>();
     }
 
     @Override
     public void init() {
-        autoParser.parse(autoFile);
         ConfigManager.init();
         actionManager = new ActionManager();
+        org.firstinspires.ftc.teamcode.configs.Pose2d wrappedPose = (org.firstinspires.ftc.teamcode.configs.Pose2d) MetaFieldRegistry.getEntry("Starting").value;
+        mecanumDrive = new MecanumDrive(hardwareMap, wrappedPose.getRRPose2d());
+        actionManager.init(mecanumDrive, telemetry);
+        autoParser.parse(autoFile);
 
         Pose2d pose;
         try {
-            pose = (Pose2d) MetaFieldRegistry.getEntry("Starting").value;
+            org.firstinspires.ftc.teamcode.configs.Pose2d pose_wrapped = (org.firstinspires.ftc.teamcode.configs.Pose2d) MetaFieldRegistry.getEntry("Starting").value;
+            pose = pose_wrapped.getRRPose2d();
+
         } catch (Exception e) {
             throw new RuntimeException("Invalid Starting Pose: MUST BE POSE2D");
         }
@@ -67,6 +74,7 @@ public class AutonomousBase extends OpMode {
             System.out.println("\n[ACTION ERRORS]:");
             for (String err : actionErrors) telemetry.addLine("  " + err);
         }
+        
         telemetry.update();
     }
 
