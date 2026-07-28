@@ -13,7 +13,6 @@ import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.action.ActionManager;
 import org.firstinspires.ftc.teamcode.action.ActionUtils;
 import org.firstinspires.ftc.teamcode.configs.ConfigManager;
-import org.firstinspires.ftc.teamcode.roadrunner.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -36,21 +35,24 @@ public class AutonomousBase extends OpMode {
     public void init() {
         ConfigManager.init();
         actionManager = new ActionManager();
-        org.firstinspires.ftc.teamcode.configs.Pose2d wrappedPose = (org.firstinspires.ftc.teamcode.configs.Pose2d) MetaFieldRegistry.getEntry("Starting").value;
-        mecanumDrive = new MecanumDrive(hardwareMap, wrappedPose.getRRPose2d());
-        actionManager.init(mecanumDrive, telemetry);
-        autoParser.parse(autoFile);
+
+        // Phase 1: Parse configuration to get the starting pose
+        autoParser.parseAutoConfig(autoFile);
 
         Pose2d pose;
         try {
             org.firstinspires.ftc.teamcode.configs.Pose2d pose_wrapped = (org.firstinspires.ftc.teamcode.configs.Pose2d) MetaFieldRegistry.getEntry("Starting").value;
             pose = pose_wrapped.getRRPose2d();
-
         } catch (Exception e) {
             throw new RuntimeException("Invalid Starting Pose: MUST BE POSE2D");
         }
+
+        // Phase 2: Initialize hardware with the correct pose
         mecanumDrive = new MecanumDrive(hardwareMap, pose);
         actionManager.init(mecanumDrive, telemetry);
+
+        // Phase 3: Parse actions (now that primitives are registered by actionManager)
+        autoParser.parseActions();
 
         MetaFieldRegistry.ConfigEntry<?> titleEntry = MetaFieldRegistry.getEntry("Title");
         if (titleEntry != null && titleEntry.value != null && !titleEntry.value.toString().trim().isEmpty()) {
@@ -90,5 +92,22 @@ public class AutonomousBase extends OpMode {
 
     @Override
     public void loop() {
+        dumpAllFields();
+        telemetry.update();
+    }
+    private void printField(String name) {
+        MetaFieldRegistry.ConfigEntry<?> entry = MetaFieldRegistry.getEntry(name);
+        if (entry != null) {
+            telemetry.addLine(entry.fieldName + ": " + entry.value);
+        } else {
+            telemetry.addLine(name + ": [Not Registered]");
+        }
+    }
+
+    private void dumpAllFields() {
+        List<String> registeredIdentifiers = MetaFieldRegistry.getAllRegisteredFieldNames();
+        for (String identifier : registeredIdentifiers) {
+            printField(identifier);
+        }
     }
 }

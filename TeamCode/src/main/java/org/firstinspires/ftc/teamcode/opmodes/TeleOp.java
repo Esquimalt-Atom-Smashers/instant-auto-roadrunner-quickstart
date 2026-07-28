@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import static org.firstinspires.ftc.teamcode.TextFileLocationBook.robotSettingFilePath;
-
+import com.example.instantauto.actions.AutoParser;
+import com.example.instantauto.actions.UserActionRegistry;
 import com.example.instantauto.configs.ConfigParser;
 import com.example.instantauto.configs.MetaFieldRegistry;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -14,22 +14,13 @@ import java.util.List;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp
 public class TeleOp extends OpMode {
-    public ConfigParser engine;
-    private String configPath = robotSettingFilePath;
-
-    public void setConfigPath(String path) {
-        this.configPath = path;
-    }
+    private AutoParser autoParser = new AutoParser(TextFileLocationBook.robotSettingFilePath, TextFileLocationBook.userActionSettingFilePath);
 
     @Override
     public void init() {
-        engine = new ConfigParser();
-        ConfigManager.init();
-        engine.parseConfig(configPath);
-
-        telemetry.addLine("Reading from " + configPath);
+        telemetry.addLine("Reading from " + TextFileLocationBook.GENERAL_ROBOT_SETTING_FILE_NAME);
         telemetry.addLine("--- Config Parser Logs ---");
-        List<String> logs = engine.getLogs();
+        List<String> logs = autoParser.getConfigLogs();
         if (logs.isEmpty()) {
             telemetry.addLine("No errors found.");
         } else {

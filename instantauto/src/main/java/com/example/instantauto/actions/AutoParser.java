@@ -17,6 +17,8 @@ public class AutoParser {
     private final List<Action> actions = new ArrayList<>();
     private final List<String> actionErrors = new ArrayList<>();
 
+    private String actionContent;
+
     public AutoParser(String generalSettingsPath, String metaActionSettingsPath) {
         this.generalSettingsPath = generalSettingsPath;
         this.metaActionSettingsPath = metaActionSettingsPath;
@@ -47,17 +49,19 @@ public class AutoParser {
     }
 
     /**
-     * Parses the selected autonomous file, including configuration hierarchy and action sequence.
+     * Phase 1: Parses configuration hierarchy and saves action sequence text.
      */
-    public void parse(File autoFile) {
+    public void parseAutoConfig(File autoFile) {
+        MetaFieldRegistry.clear();
+        actions.clear();
+        actionErrors.clear();
+        configEngine.getLogs().clear();
+
         // 1. Parse General Settings (Base Config)
         configEngine.parseConfig(generalSettingsPath);
 
-        // Initialize Registry from settings
-        UserActionRegistry.loadSettings(metaActionSettingsPath);
-
         // 2. Parse both Configs AND Actions from the auto file in one pass
-        StringBuilder actionContent = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new FileReader(autoFile))) {
             String line;
             int lineNumber = 0;
@@ -69,30 +73,38 @@ public class AutoParser {
                 // Handle top-level configuration in the auto file
                 if (line.contains("=")) {
                     configEngine.handleConfigLine(line, lineNumber);
+                    sb.append("\n");
                     continue;
                 }
-                actionContent.append(line).append("\n");
+                sb.append(line).append("\n");
             }
         } catch (IOException e) {
             actionErrors.add("Error reading auto file: " + e.getMessage());
         }
+        this.actionContent = sb.toString();
 
         // --- Post-parsing Validation & Logic ---
-        
+
         // Check for required "Starting" field
         MetaFieldRegistry.ConfigEntry<?> startingEntry = MetaFieldRegistry.getEntry("Starting");
         if (startingEntry == null || startingEntry.value == null || startingEntry.value.toString().trim().isEmpty()) {
             throw new RuntimeException("CRITICAL ERROR: Required 'Starting' field is missing or empty in " + autoFile.getName());
         }
+    }
 
-        // Print Title if exists
-        MetaFieldRegistry.ConfigEntry<?> titleEntry = MetaFieldRegistry.getEntry("Title");
-        if (titleEntry != null && titleEntry.value != null && !titleEntry.value.toString().trim().isEmpty()) {
-            System.out.println("Auto Title: " + titleEntry.value);
-        }
+    /**
+     * Phase 2: Parses action strings into actual Action objects.
+     * This should be called AFTER ActionManager has registered primitives.
+     */
+    public void parseActions() {
+        // Initialize Registry from settings
+        UserActionRegistry.clear();
+        UserActionRegistry.loadSettings(metaActionSettingsPath);
+
+        if (actionContent == null) return;
 
         // 3. Parse Action strings into actual Action objects
-        List<String> actionStrings = UserActionRegistry.splitByTopLevelCommas(actionContent.toString());
+        List<String> actionStrings = UserActionRegistry.splitByTopLevelCommas(actionContent);
         for (int i = 0; i < actionStrings.size(); i++) {
             String actionStr = actionStrings.get(i).trim();
             if (actionStr.isEmpty()) continue;
@@ -100,9 +112,25 @@ public class AutoParser {
             if (action != null) {
                 actions.add(action);
             } else {
-                actionErrors.add("Action " + (i + 1) + ": Unknown Action -> " + actionStr);
+                actionErrors.add("Action line" + (i + 1) + ": Unknown Action -> " + actionStr);
             }
         }
+    }
+
+    /**
+     * Original combined parse method for compatibility.
+     * @deprecated Use parseConfig() then parseActions() to handle dependencies.
+     */
+    @Deprecated
+    public void parse(File autoFile) {
+        parseAutoConfig(autoFile);
+        parseActions();
+    }
+
+    public void parseTeleOpConfig() {
+        MetaFieldRegistry.clear();
+        configEngine.getLogs().clear();
+        configEngine.parseConfig(generalSettingsPath);
     }
 
     public List<Action> getActions() {
