@@ -52,7 +52,6 @@ public class AutoParser {
      * Phase 1: Parses configuration hierarchy and saves action sequence text.
      */
     public void parseAutoConfig(File autoFile) {
-        MetaFieldRegistry.clear();
         actions.clear();
         actionErrors.clear();
         configEngine.getLogs().clear();
@@ -98,7 +97,6 @@ public class AutoParser {
      */
     public void parseActions() {
         // Initialize Registry from settings
-        UserActionRegistry.clear();
         UserActionRegistry.loadSettings(metaActionSettingsPath);
 
         if (actionContent == null) return;

@@ -36,6 +36,11 @@ public class TeleOp extends OpMode {
         dumpAllFields();
         telemetry.update();
     }
+    @Override
+    public void stop() {
+        MetaFieldRegistry.clear();
+        UserActionRegistry.clear();
+    }
 
     private void printField(String name) {
         MetaFieldRegistry.ConfigEntry<?> entry = MetaFieldRegistry.getEntry(name);
