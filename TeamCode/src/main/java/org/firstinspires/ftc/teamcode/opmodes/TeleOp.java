@@ -43,7 +43,7 @@ public class TeleOp extends OpMode {
     }
     @Override
     public void stop() {
-        MetaFieldRegistry.clear();
+         MetaFieldRegistry.clear(); // Removed variable persistence
         UserActionRegistry.clear();
     }
 

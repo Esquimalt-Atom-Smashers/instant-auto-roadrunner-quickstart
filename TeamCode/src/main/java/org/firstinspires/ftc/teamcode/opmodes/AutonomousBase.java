@@ -87,8 +87,13 @@ public class AutonomousBase extends OpMode {
 
     @Override
     public void start() {
-        for (Action action : autoParser.getActions()) {
-            actions.add(ActionUtils.adapt(action));
+        // Clear actions before re-parsing with merging
+        actions.clear();
+        List<Action> mergedActions = ActionUtils.asActions(autoParser.getActionContent());
+        if (mergedActions != null) {
+            for (Action action : mergedActions) {
+                actions.add(ActionUtils.adapt(action));
+            }
         }
         Actions.runBlocking(
                 new SequentialAction(actions)

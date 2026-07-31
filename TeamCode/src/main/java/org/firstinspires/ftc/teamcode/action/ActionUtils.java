@@ -53,6 +53,7 @@ public class ActionUtils {
 
     /**
      * Parses a CSV string into an array of doubles.
+     * Supports variable resolution.
      * @param params The parameter object (usually a String).
      * @param count The expected number of doubles.
      * @return A double array or null if parsing fails.
@@ -64,14 +65,22 @@ public class ActionUtils {
             String[] parts = s.split(",");
             if (parts.length != count) return null;
             double[] result = new double[count];
-            try {
-                for (int i = 0; i < count; i++) {
-                    result[i] = Double.parseDouble(parts[i].trim());
+            for (int i = 0; i < count; i++) {
+                String part = parts[i].trim();
+                try {
+                    result[i] = Double.parseDouble(part);
+                } catch (NumberFormatException e) {
+                    // Try to resolve as a variable
+                    com.example.instantauto.configs.MetaFieldRegistry.ConfigEntry<?> entry =
+                            com.example.instantauto.configs.MetaFieldRegistry.getEntry(part);
+                    if (entry != null && entry.value instanceof Number) {
+                        result[i] = ((Number) entry.value).doubleValue();
+                    } else {
+                        return null; // Failed to resolve
+                    }
                 }
-                return result;
-            } catch (NumberFormatException e) {
-                return null;
             }
+            return result;
         }
         return null;
     }
@@ -87,11 +96,44 @@ public class ActionUtils {
             List<Action> actions = new ArrayList<>();
             for (String sub : subActionStrings) {
                 Action a = UserActionRegistry.createAction(sub);
-                if (a != null) actions.add(a);
+                if (a != null) {
+                    actions.add(a);
+                } else if (!sub.trim().isEmpty()) {
+                    UserActionRegistry.addError("Malformed action: " + sub);
+                }
             }
-            return actions;
+            return merge(actions);
         }
         return null;
+    }
+
+    /**
+     * Merges consecutive Roadrunner actions into a single SequentialAction.
+     * This helps in identifying blocks of motion.
+     */
+    private static List<Action> merge(List<Action> actions) {
+        if (actions.size() <= 1) return actions;
+        
+        List<Action> merged = new ArrayList<>();
+        List<com.acmerobotics.roadrunner.Action> rrGroup = new ArrayList<>();
+        
+        for (Action a : actions) {
+            if (a instanceof WrappedRRAction) {
+                rrGroup.add(((WrappedRRAction) a).getRRAction());
+            } else {
+                if (!rrGroup.isEmpty()) {
+                    merged.add(wrap(new com.acmerobotics.roadrunner.SequentialAction(rrGroup)));
+                    rrGroup = new ArrayList<>();
+                }
+                merged.add(a);
+            }
+        }
+        
+        if (!rrGroup.isEmpty()) {
+            merged.add(wrap(new com.acmerobotics.roadrunner.SequentialAction(rrGroup)));
+        }
+        
+        return merged;
     }
 
     /**

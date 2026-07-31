@@ -89,29 +89,47 @@ public class UserActionRegistry {
                     }
                     final String rest = restStr;
                     return new Action() {
+                        private boolean initialized = false;
+                        private boolean conditionResult = false;
+                        private List<Action> targetActions = null;
+                        private int currentIndex = 0;
+
                         @Override
                         public boolean run() {
-                            if (evaluateCondition(condition)) {
-                                for (Action a : trueActions) if (a != null) a.run();
-                            } else if (!rest.isEmpty()) {
-                                String elseRest = rest.substring(4).trim();
-                                if (elseRest.toLowerCase().startsWith("if")) {
-                                    Action elseIfAction = createAction(elseRest);
-                                    if (elseIfAction != null) elseIfAction.run();
-                                } else {
-                                    // Handle 'else { ... }'
-                                    int elseBrace = rest.indexOf("{");
-                                    if (elseBrace != -1) {
-                                        int elseMatchingBrace = findMatching(rest, elseBrace, '{', '}');
-                                        if (elseMatchingBrace != -1) {
-                                            String falseBlock = rest.substring(elseBrace + 1, elseMatchingBrace).trim();
-                                            List<Action> falseActions = parseActionsFromBlock(falseBlock);
-                                            for (Action a : falseActions) if (a != null) a.run();
+                            if (!initialized) {
+                                conditionResult = evaluateCondition(condition);
+                                if (conditionResult) {
+                                    targetActions = trueActions;
+                                } else if (!rest.isEmpty()) {
+                                    String elseRest = rest.substring(4).trim();
+                                    if (elseRest.toLowerCase().startsWith("if")) {
+                                        // This is tricky: we might need to wrap the else-if as well
+                                        Action elseIfAction = createAction(elseRest);
+                                        targetActions = java.util.Collections.singletonList(elseIfAction);
+                                    } else {
+                                        int elseBrace = rest.indexOf("{");
+                                        if (elseBrace != -1) {
+                                            int elseMatchingBrace = findMatching(rest, elseBrace, '{', '}');
+                                            if (elseMatchingBrace != -1) {
+                                                String falseBlock = rest.substring(elseBrace + 1, elseMatchingBrace).trim();
+                                                targetActions = parseActionsFromBlock(falseBlock);
+                                            }
                                         }
                                     }
                                 }
+                                initialized = true;
                             }
-                            return false;
+
+                            if (targetActions == null || currentIndex >= targetActions.size()) {
+                                return false;
+                            }
+
+                            Action current = targetActions.get(currentIndex);
+                            if (current == null || !current.run()) {
+                                currentIndex++;
+                            }
+                            
+                            return currentIndex < targetActions.size();
                         }
                     };
                 }
@@ -221,7 +239,7 @@ public class UserActionRegistry {
         }
     }
 
-    private static void addError(String error) {
+    public static void addError(String error) {
         loadErrors.add(error);
         System.err.println(error);
     }

@@ -102,6 +102,10 @@ public class AutoParser {
         if (actionContent == null) return;
 
         // 3. Parse Action strings into actual Action objects
+        // We now delegate action list creation and merging to a utility that can handle RR actions
+        // But since this is core instantauto, we don't want to depend on Roadrunner here.
+        // The merging will happen in AutonomousBase using ActionUtils.
+        
         List<String> actionStrings = UserActionRegistry.splitByTopLevelCommas(actionContent);
         for (int i = 0; i < actionStrings.size(); i++) {
             String actionStr = actionStrings.get(i).trim();
@@ -110,9 +114,13 @@ public class AutoParser {
             if (action != null) {
                 actions.add(action);
             } else {
-                actionErrors.add("Action line" + (i + 1) + ": Unknown Action -> " + actionStr);
+                actionErrors.add("Action line " + (i + 1) + ": Unknown Action -> " + actionStr);
             }
         }
+    }
+
+    public String getActionContent() {
+        return actionContent;
     }
 
     /**

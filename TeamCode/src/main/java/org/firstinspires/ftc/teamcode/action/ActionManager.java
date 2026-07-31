@@ -133,9 +133,16 @@ public class ActionManager {
     }
     public class PrintAction implements com.acmerobotics.roadrunner.Action {
         String message;
+        boolean isVariable = false;
 
         public PrintAction(String message) {
             this.message = message;
+            // Check if this looks like a variable name (no spaces, no quotes)
+            if (!message.contains(" ") && !message.startsWith("\"")) {
+                isVariable = true;
+            } else if (message.startsWith("\"") && message.endsWith("\"")) {
+                this.message = message.substring(1, message.length() - 1);
+            }
         }
 
         public PrintAction(double n) {
@@ -152,7 +159,17 @@ public class ActionManager {
 
         @Override
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-            telemetry.addData("PRINT", message);
+            String output = message;
+            if (isVariable) {
+                com.example.instantauto.configs.MetaFieldRegistry.ConfigEntry<?> entry =
+                        com.example.instantauto.configs.MetaFieldRegistry.getEntry(message);
+                if (entry != null) {
+                    output = ActionUtils.asString(entry.value);
+                }
+            }
+            telemetry.addData("PRINT", output);
+            telemetryPacket.put("PRINT", output);
+            telemetry.update();
             return false;
         }
     }
