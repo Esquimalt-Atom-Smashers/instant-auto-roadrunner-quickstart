@@ -126,7 +126,6 @@ public class AutoParser {
     }
 
     public void parseTeleOpConfig() {
-        MetaFieldRegistry.clear();
         configEngine.getLogs().clear();
         configEngine.parseConfig(generalSettingsPath);
     }

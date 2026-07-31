@@ -1,11 +1,14 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.example.instantauto.actions.Action;
 import com.example.instantauto.actions.AutoParser;
 import com.example.instantauto.actions.UserActionRegistry;
+import com.example.instantauto.configs.ConfigParser;
 import com.example.instantauto.configs.MetaFieldRegistry;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
@@ -24,6 +27,7 @@ public class AutonomousBase extends OpMode {
     private final File autoFile;
     private List<com.acmerobotics.roadrunner.Action> actions;
     private MecanumDrive mecanumDrive;
+    private ConfigParser configParser = new ConfigParser();
 
     public AutonomousBase(AutoParser autoParser, File autoFile) {
         this.autoParser = autoParser;
@@ -35,6 +39,7 @@ public class AutonomousBase extends OpMode {
     public void init() {
         ConfigManager.init();
         actionManager = new ActionManager();
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         // Phase 1: Parse configuration to get the starting pose
         autoParser.parseAutoConfig(autoFile);
@@ -93,6 +98,7 @@ public class AutonomousBase extends OpMode {
     @Override
     public void loop() {
         dumpAllFields();
+        configParser.userUpdateEntry("autoTimer", this.time);
         telemetry.update();
     }
     @Override

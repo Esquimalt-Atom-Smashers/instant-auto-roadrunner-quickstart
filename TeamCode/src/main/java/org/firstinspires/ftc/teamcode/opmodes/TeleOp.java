@@ -3,10 +3,10 @@ package org.firstinspires.ftc.teamcode.opmodes;
 import com.example.instantauto.actions.AutoParser;
 import com.example.instantauto.actions.UserActionRegistry;
 import com.example.instantauto.configs.ConfigParser;
+import com.example.instantauto.configs.MetaField;
 import com.example.instantauto.configs.MetaFieldRegistry;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.TextFileLocationBook;
 import org.firstinspires.ftc.teamcode.configs.ConfigManager;
 
@@ -15,10 +15,13 @@ import java.util.List;
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp
 public class TeleOp extends OpMode {
     private AutoParser autoParser = new AutoParser(TextFileLocationBook.robotSettingFilePath, TextFileLocationBook.userActionSettingFilePath);
+    private ConfigParser configParser = new ConfigParser();
 
     @Override
     public void init() {
         telemetry.addLine("Reading from " + TextFileLocationBook.GENERAL_ROBOT_SETTING_FILE_NAME);
+        ConfigManager.init();
+        autoParser.parseTeleOpConfig();
         telemetry.addLine("--- Config Parser Logs ---");
         List<String> logs = autoParser.getConfigLogs();
         if (logs.isEmpty()) {
@@ -34,6 +37,8 @@ public class TeleOp extends OpMode {
     @Override
     public void loop() {
         dumpAllFields();
+        configParser.userUpdateEntry("gamepadLeftY" ,-gamepad1.left_stick_y);
+        printField("gamepadLeftY");
         telemetry.update();
     }
     @Override
