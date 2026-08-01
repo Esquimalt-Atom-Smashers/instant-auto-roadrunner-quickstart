@@ -183,12 +183,15 @@ public class UserActionRegistry {
                 String currentLine = rawLines.get(i).trim();
                 if (currentLine.isEmpty() || currentLine.startsWith("//") || currentLine.startsWith("#")) continue;
 
-                if (currentLine.contains("={")) {
+                // Support both "name={" and "name = {"
+                if (currentLine.contains("=") && currentLine.substring(currentLine.indexOf("=") + 1).trim().startsWith("{")) {
                     int definitionStartLine = i + 1;
-                    String actionName = currentLine.substring(0, currentLine.indexOf("=")).trim();
+                    int eqIndex = currentLine.indexOf("=");
+                    String actionName = currentLine.substring(0, eqIndex).trim();
                     
                     StringBuilder actionContent = new StringBuilder();
-                    String firstLineContent = currentLine.substring(currentLine.indexOf("={") + 2).trim();
+                    int firstBrace = currentLine.indexOf("{", eqIndex);
+                    String firstLineContent = currentLine.substring(firstBrace + 1).trim();
                     actionContent.append(firstLineContent);
                     
                     int braceLevel = 1;

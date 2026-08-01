@@ -89,10 +89,10 @@ public class AutonomousBase extends OpMode {
     public void start() {
         // Clear actions before re-parsing with merging
         actions.clear();
-        List<Action> mergedActions = ActionUtils.asActions(autoParser.getActionContent());
+        List<Action> mergedActions = ActionUtils.asActions(autoParser.getActionContent(), mecanumDrive);
         if (mergedActions != null) {
             for (Action action : mergedActions) {
-                actions.add(ActionUtils.adapt(action));
+                actions.add(ActionUtils.adapt(action, telemetry));
             }
         }
         Actions.runBlocking(

@@ -4,23 +4,43 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.example.instantauto.actions.Action;
 import com.example.instantauto.actions.UserActionRegistry;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 public class ActionUtils {
     /**
+     * Marker interface for actions that can be fused into a single Roadrunner trajectory.
+     */
+    public interface BuilderAction extends Action {
+        com.acmerobotics.roadrunner.TrajectoryActionBuilder apply(com.acmerobotics.roadrunner.TrajectoryActionBuilder builder);
+    }
+
+    /**
      * Adapts an InstantAuto Action to a RoadRunner Action.
      * Useful for running via Actions.runBlocking(adapt(myAction)).
      */
-    public static com.acmerobotics.roadrunner.Action adapt(final com.example.instantauto.actions.Action action) {
+    public static com.acmerobotics.roadrunner.Action adapt(final com.example.instantauto.actions.Action action, final Telemetry telemetry) {
         if (action instanceof WrappedRRAction) {
-            return ((WrappedRRAction) action).getRRAction();
+            final com.acmerobotics.roadrunner.Action rrAction = ((WrappedRRAction) action).getRRAction();
+            return new com.acmerobotics.roadrunner.Action() {
+                @Override
+                public boolean run(TelemetryPacket packet) {
+                    boolean result = rrAction.run(packet);
+                    telemetry.update();
+                    return result;
+                }
+            };
         }
         return new com.acmerobotics.roadrunner.Action() {
             @Override
             public boolean run(TelemetryPacket packet) {
-                return action.run();
+                boolean result = action.run();
+                telemetry.update();
+                return result;
             }
         };
     }
@@ -90,7 +110,7 @@ public class ActionUtils {
      * @param params The parameter object (usually a String).
      * @return A list of actions or null if input is not a string.
      */
-    public static List<Action> asActions(Object params) {
+    public static List<Action> asActions(Object params, MecanumDrive drive) {
         if (params instanceof String) {
             List<String> subActionStrings = UserActionRegistry.splitByTopLevelCommas((String) params);
             List<Action> actions = new ArrayList<>();
@@ -102,38 +122,46 @@ public class ActionUtils {
                     UserActionRegistry.addError("Malformed action: " + sub);
                 }
             }
-            return merge(actions);
+            return merge(actions, drive);
         }
         return null;
     }
 
     /**
-     * Merges consecutive Roadrunner actions into a single SequentialAction.
-     * This helps in identifying blocks of motion.
+     * Merges consecutive BuilderAction actions into a single Roadrunner trajectory.
      */
-    private static List<Action> merge(List<Action> actions) {
+    private static List<Action> merge(List<Action> actions, MecanumDrive drive) {
         if (actions.size() <= 1) return actions;
         
         List<Action> merged = new ArrayList<>();
-        List<com.acmerobotics.roadrunner.Action> rrGroup = new ArrayList<>();
+        List<BuilderAction> group = new ArrayList<>();
         
         for (Action a : actions) {
-            if (a instanceof WrappedRRAction) {
-                rrGroup.add(((WrappedRRAction) a).getRRAction());
+            if (a instanceof BuilderAction) {
+                group.add((BuilderAction) a);
             } else {
-                if (!rrGroup.isEmpty()) {
-                    merged.add(wrap(new com.acmerobotics.roadrunner.SequentialAction(rrGroup)));
-                    rrGroup = new ArrayList<>();
+                if (!group.isEmpty()) {
+                    merged.add(fuse(group, drive));
+                    group = new ArrayList<>();
                 }
                 merged.add(a);
             }
         }
         
-        if (!rrGroup.isEmpty()) {
-            merged.add(wrap(new com.acmerobotics.roadrunner.SequentialAction(rrGroup)));
+        if (!group.isEmpty()) {
+            merged.add(fuse(group, drive));
         }
         
         return merged;
+    }
+
+    private static Action fuse(List<BuilderAction> group, MecanumDrive drive) {
+        if (group.size() == 0) return null;
+        com.acmerobotics.roadrunner.TrajectoryActionBuilder builder = drive.actionBuilder(drive.localizer.getPose());
+        for (BuilderAction ba : group) {
+            builder = ba.apply(builder);
+        }
+        return wrap(builder.build());
     }
 
     /**

@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Locale;
 
 public class ActionManager {
-    TrajectoryActionBuilder builder;
     MecanumDrive mecanumDrive;
     Telemetry telemetry;
     public void init(MecanumDrive drivebase, Telemetry telemetry) {
@@ -32,23 +31,23 @@ public class ActionManager {
                 ActionUtils.wrap(new PrintAction(ActionUtils.asString(obj)))));
 
         UserActionRegistry.register(new MiniAction("PARALLEL", params -> {
-            List<Action> actions = ActionUtils.asActions(params);
+            List<Action> actions = ActionUtils.asActions(params, mecanumDrive);
             if (actions == null) return null;
 
             List<com.acmerobotics.roadrunner.Action> rrActions = new ArrayList<>();
             for (Action a : actions) {
-                rrActions.add(ActionUtils.adapt(a));
+                rrActions.add(ActionUtils.adapt(a, telemetry));
             }
             return ActionUtils.wrap(new com.acmerobotics.roadrunner.ParallelAction(rrActions));
         }));
 
         UserActionRegistry.register(new MiniAction("RACE", params -> {
-            List<Action> actions = ActionUtils.asActions(params);
+            List<Action> actions = ActionUtils.asActions(params, mecanumDrive);
             if (actions == null) return null;
 
             List<com.acmerobotics.roadrunner.Action> rrActions = new ArrayList<>();
             for (Action a : actions) {
-                rrActions.add(ActionUtils.adapt(a));
+                rrActions.add(ActionUtils.adapt(a, telemetry));
             }
             return ActionUtils.wrap(new RaceAction(rrActions));
         }));
@@ -66,14 +65,32 @@ public class ActionManager {
     private Action strafeToFactory(Object params) {
         // Handle Case 1: Received a Pose2d object (Variable Lookup)
         if (params instanceof Pose2d) {
-            Pose2d p = (Pose2d) params;
-            return ActionUtils.wrap(this.strafeToAction(p.x, p.y, p.heading));
+            final Pose2d p = (Pose2d) params;
+            return new ActionUtils.BuilderAction() {
+                @Override
+                public TrajectoryActionBuilder apply(TrajectoryActionBuilder builder) {
+                    return builder.strafeToSplineHeading(new Vector2d(p.x, p.y), Math.toRadians(p.heading));
+                }
+                @Override
+                public boolean run() {
+                    return apply(mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())).build().run(new TelemetryPacket());
+                }
+            };
         }
 
         // Handle Case 2: Received a String (Literal Parameters "x, y, h")
-        double[] d = ActionUtils.asDoubles(params, 3);
+        final double[] d = ActionUtils.asDoubles(params, 3);
         if (d != null) {
-            return ActionUtils.wrap(this.strafeToAction(d[0], d[1], d[2]));
+            return new ActionUtils.BuilderAction() {
+                @Override
+                public TrajectoryActionBuilder apply(TrajectoryActionBuilder builder) {
+                    return builder.strafeToSplineHeading(new Vector2d(d[0], d[1]), Math.toRadians(d[2]));
+                }
+                @Override
+                public boolean run() {
+                    return apply(mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())).build().run(new TelemetryPacket());
+                }
+            };
         }
         return null;
     }
@@ -85,9 +102,19 @@ public class ActionManager {
 
             // Handle Case 1: "x, y, heading, startTan, endTan" (5 doubles)
             if (parts.length == 5) {
-                double[] d = ActionUtils.asDoubles(s, 5);
+                final double[] d = ActionUtils.asDoubles(s, 5);
                 if (d != null) {
-                    return ActionUtils.wrap(this.splineToAction(d[0], d[1], d[2], d[3], d[4]));
+                    return new ActionUtils.BuilderAction() {
+                        @Override
+                        public TrajectoryActionBuilder apply(TrajectoryActionBuilder builder) {
+                            return builder.setTangent(Math.toRadians(d[3]))
+                                    .splineToSplineHeading(new com.acmerobotics.roadrunner.Pose2d(d[0], d[1], Math.toRadians(d[2])), Math.toRadians(d[4]));
+                        }
+                        @Override
+                        public boolean run() {
+                            return apply(mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())).build().run(new TelemetryPacket());
+                        }
+                    };
                 }
             }
 
@@ -97,11 +124,21 @@ public class ActionManager {
                 com.example.instantauto.configs.MetaFieldRegistry.ConfigEntry<?> entry =
                         com.example.instantauto.configs.MetaFieldRegistry.getEntry(poseName);
                 if (entry != null && entry.value instanceof Pose2d) {
-                    Pose2d p = (Pose2d) entry.value;
+                    final Pose2d p = (Pose2d) entry.value;
                     try {
-                        double startTan = Double.parseDouble(parts[1].trim());
-                        double endTan = Double.parseDouble(parts[2].trim());
-                        return ActionUtils.wrap(this.splineToAction(p.x, p.y, p.heading, startTan, endTan));
+                        final double startTan = Double.parseDouble(parts[1].trim());
+                        final double endTan = Double.parseDouble(parts[2].trim());
+                        return new ActionUtils.BuilderAction() {
+                            @Override
+                            public TrajectoryActionBuilder apply(TrajectoryActionBuilder builder) {
+                                return builder.setTangent(Math.toRadians(startTan))
+                                        .splineToSplineHeading(new com.acmerobotics.roadrunner.Pose2d(p.x, p.y, Math.toRadians(p.heading)), Math.toRadians(endTan));
+                            }
+                            @Override
+                            public boolean run() {
+                                return apply(mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())).build().run(new TelemetryPacket());
+                            }
+                        };
                     } catch (NumberFormatException ignored) {}
                 }
             }
@@ -110,27 +147,6 @@ public class ActionManager {
         return null;
     }
 
-    public com.acmerobotics.roadrunner.Action strafeToAction(double x, double y, double headingDegree) {
-        if (builder == null) {
-            builder = mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose());
-        }
-        builder = builder.strafeToSplineHeading(new Vector2d(x, y), Math.toRadians(headingDegree));
-        TrajectoryActionBuilder oldBuilder = builder;
-        builder = builder.fresh(); // continue from last end
-        return oldBuilder.build();
-    }
-
-    public com.acmerobotics.roadrunner.Action splineToAction(double x, double y, double headingDegree, double pathStartDeg, double pathEndDeg) {
-        if (builder == null) {
-            builder = mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose());
-        }
-        
-        builder = builder.setTangent(Math.toRadians(pathStartDeg))
-        .splineToSplineHeading(new com.acmerobotics.roadrunner.Pose2d(x, y, Math.toRadians(headingDegree)), Math.toRadians(pathEndDeg));
-        TrajectoryActionBuilder oldBuilder = builder;
-        builder = builder.fresh(); // continue from last end
-        return oldBuilder.build();
-    }
     public class PrintAction implements com.acmerobotics.roadrunner.Action {
         String message;
         boolean isVariable = false;
@@ -159,16 +175,16 @@ public class ActionManager {
 
         @Override
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-            String output = message;
+            String finalOutput = message;
             if (isVariable) {
                 com.example.instantauto.configs.MetaFieldRegistry.ConfigEntry<?> entry =
                         com.example.instantauto.configs.MetaFieldRegistry.getEntry(message);
                 if (entry != null) {
-                    output = ActionUtils.asString(entry.value);
+                    finalOutput = ActionUtils.asString(entry.value);
                 }
             }
-            telemetry.addData("PRINT", output);
-            telemetryPacket.put("PRINT", output);
+            telemetry.log().add("PRINT: " + finalOutput);
+            telemetryPacket.put("PRINT", finalOutput);
             telemetry.update();
             return false;
         }
