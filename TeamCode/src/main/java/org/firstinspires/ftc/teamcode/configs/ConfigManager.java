@@ -17,6 +17,7 @@ public class ConfigManager {
         registerField("intakeActive", IntakeSetting.class, new IntakeSetting("NORMAL", true, 0.8));
         registerField("motorName", String.class, "motorName");
         registerField("gamepadLeftY", Double.class, 0.0);
+        registerField("sysTime", Integer.class, 0);
 
         // New required fields for Auto
         registerField("Title", String.class, "");

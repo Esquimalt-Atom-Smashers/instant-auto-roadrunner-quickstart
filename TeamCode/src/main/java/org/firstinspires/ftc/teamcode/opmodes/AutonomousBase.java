@@ -1,10 +1,14 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import androidx.annotation.NonNull;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.InstantAction;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.RaceAction;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.example.instantauto.actions.Action;
@@ -50,6 +54,7 @@ public class AutonomousBase extends OpMode {
 
         // Phase 1: Parse configuration to get the starting pose
         autoParser.parseAutoConfig(autoFile);
+        configParser.userUpdateEntry("sysTime", System.nanoTime());
 
         Pose2d pose;
         try {
@@ -88,10 +93,10 @@ public class AutonomousBase extends OpMode {
             System.out.println("\n[ACTION ERRORS]:");
             for (String err : actionErrors) telemetry.addLine("  " + err);
         }
-        UserActionRegistry.registerCondition("withinDistance", () -> (distanceSensor.getDistance(DistanceUnit.CM) <= 1.0));
+        UserActionRegistry.registerCondition("withinDistance", () -> (distanceSensor.getDistance(DistanceUnit.CM) <= 20.0));
+
         telemetry.update();
     }
-
     @Override
     public void start() {
         // Clear actions before re-parsing with merging
@@ -103,16 +108,18 @@ public class AutonomousBase extends OpMode {
             }
         }
         Actions.runBlocking(
-                new ParallelAction(
-                        new SequentialAction(actions)
-                        )
+                new RaceAction(
+                        new SequentialAction(actions),
+                        telemetryAction(this)
+                )
         );
+
     }
 
     @Override
     public void loop() {
         dumpAllFields();
-        configParser.userUpdateEntry("autoTimer", this.time);
+        telemetry.addData("withinDistance", UserActionRegistry.evaluateCondition("withinDistance"));
         telemetry.update();
     }
     @Override
@@ -120,6 +127,22 @@ public class AutonomousBase extends OpMode {
         MetaFieldRegistry.clear();
         UserActionRegistry.clear();
     }
+
+    public class TelemetryAction implements com.acmerobotics.roadrunner.Action {
+        private OpMode opMode;
+        public TelemetryAction(OpMode opMode) {
+            this.opMode = opMode;
+        }
+        @Override
+        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+            configParser.userUpdateEntry("sysTime", System.nanoTime());
+            System.out.println("sysTime: " + MetaFieldRegistry.getEntry("sysTime").value);
+            telemetry.update();
+            return true;
+        }
+    }
+
+    public com.acmerobotics.roadrunner.Action telemetryAction(OpMode opMode) {return new TelemetryAction(opMode);}
     private void printField(String name) {
         MetaFieldRegistry.ConfigEntry<?> entry = MetaFieldRegistry.getEntry(name);
         if (entry != null) {

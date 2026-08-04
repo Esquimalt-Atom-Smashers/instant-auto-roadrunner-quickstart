@@ -183,10 +183,10 @@ public class ActionManager {
                     finalOutput = ActionUtils.asString(entry.value);
                 }
             }
-            telemetry.log().add("PRINT: " + finalOutput);
-            telemetryPacket.put("PRINT", finalOutput);
+            telemetry.addLine("PRINT: " + finalOutput);
+//            telemetryPacket.put("PRINT", finalOutput);
             telemetry.update();
-            return false;
+            return true;
         }
     }
 
