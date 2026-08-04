@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.opmodes;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.roadrunner.InstantAction;
+import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -11,7 +13,10 @@ import com.example.instantauto.actions.UserActionRegistry;
 import com.example.instantauto.configs.ConfigParser;
 import com.example.instantauto.configs.MetaFieldRegistry;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.action.ActionManager;
 import org.firstinspires.ftc.teamcode.action.ActionUtils;
@@ -28,6 +33,7 @@ public class AutonomousBase extends OpMode {
     private List<com.acmerobotics.roadrunner.Action> actions;
     private MecanumDrive mecanumDrive;
     private ConfigParser configParser = new ConfigParser();
+    private DistanceSensor distanceSensor;
 
     public AutonomousBase(AutoParser autoParser, File autoFile) {
         this.autoParser = autoParser;
@@ -40,6 +46,7 @@ public class AutonomousBase extends OpMode {
         ConfigManager.init();
         actionManager = new ActionManager();
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
 
         // Phase 1: Parse configuration to get the starting pose
         autoParser.parseAutoConfig(autoFile);
@@ -81,7 +88,7 @@ public class AutonomousBase extends OpMode {
             System.out.println("\n[ACTION ERRORS]:");
             for (String err : actionErrors) telemetry.addLine("  " + err);
         }
-        
+        UserActionRegistry.registerCondition("withinDistance", () -> (distanceSensor.getDistance(DistanceUnit.CM) <= 1.0));
         telemetry.update();
     }
 
@@ -96,7 +103,9 @@ public class AutonomousBase extends OpMode {
             }
         }
         Actions.runBlocking(
-                new SequentialAction(actions)
+                new ParallelAction(
+                        new SequentialAction(actions)
+                        )
         );
     }
 
