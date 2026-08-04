@@ -25,22 +25,13 @@ public class ActionUtils {
      */
     public static com.acmerobotics.roadrunner.Action adapt(final com.example.instantauto.actions.Action action, final Telemetry telemetry) {
         if (action instanceof WrappedRRAction) {
-            final com.acmerobotics.roadrunner.Action rrAction = ((WrappedRRAction) action).getRRAction();
-            return new com.acmerobotics.roadrunner.Action() {
-                @Override
-                public boolean run(TelemetryPacket packet) {
-                    boolean result = rrAction.run(packet);
-                    telemetry.update();
-                    return result;
-                }
-            };
+            return ((WrappedRRAction) action).getRRAction();
         }
+
         return new com.acmerobotics.roadrunner.Action() {
             @Override
             public boolean run(TelemetryPacket packet) {
-                boolean result = action.run();
-                telemetry.update();
-                return result;
+                return action.run();
             }
         };
     }
@@ -156,7 +147,7 @@ public class ActionUtils {
     }
 
     private static Action fuse(List<BuilderAction> group, MecanumDrive drive) {
-        if (group.size() == 0) return null;
+        if (group.isEmpty()) return null;
         com.acmerobotics.roadrunner.TrajectoryActionBuilder builder = drive.actionBuilder(drive.localizer.getPose());
         for (BuilderAction ba : group) {
             builder = ba.apply(builder);
