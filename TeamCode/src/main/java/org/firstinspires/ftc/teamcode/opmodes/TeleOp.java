@@ -14,7 +14,6 @@ import java.util.List;
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp
 public class TeleOp extends OpMode {
     private AutoParser autoParser = new AutoParser(TextFileLocationBook.robotSettingFilePath, TextFileLocationBook.userActionSettingFilePath);
-    private ConfigParser configParser = new ConfigParser();
 
     @Override
     public void init() {
