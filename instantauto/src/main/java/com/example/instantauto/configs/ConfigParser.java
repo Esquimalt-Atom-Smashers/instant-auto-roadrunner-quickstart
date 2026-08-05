@@ -70,14 +70,14 @@ public class ConfigParser {
             //if return null, it is a simple type
             Object parsedValue = convertSimpleType(value, entry.type, lineNumber);
             if (parsedValue != null) {
-                updateEntryValue(entry, parsedValue);
+                updateStaticEntryValue(entry, parsedValue);
             }
             return;
         }
         //if not null, it is a user-defined type
         Object parsedValue = parseMetaFieldValue(value, typeDef, lineNumber);
         if (parsedValue != null) {
-            updateEntryValue(entry, parsedValue);
+            updateStaticEntryValue(entry, parsedValue);
         }
     }
 
@@ -158,7 +158,7 @@ public class ConfigParser {
         return null;
     }
 
-    public void userUpdateEntry(String fieldName, Object newValue) {
+    public void userUpdateStaticEntry(String fieldName, Object newValue) {
         MetaFieldRegistry.ConfigEntry<?> entry = MetaFieldRegistry.getEntry(fieldName);
         if (entry == null) {
             //if not, do nothing
@@ -170,20 +170,20 @@ public class ConfigParser {
             //if return null, it is a simple type
             Object parsedValue = convertSimpleType(newValue.toString(), entry.type, 0);
             if (parsedValue != null) {
-                updateEntryValue(entry, parsedValue);
+                updateStaticEntryValue(entry, parsedValue);
             }
             return;
         }
         //if not null, it is a user-defined type
         Object parsedValue = parseMetaFieldValue(newValue.toString(), typeDef, 0);
         if (parsedValue != null) {
-            updateEntryValue(entry, parsedValue);
+            updateStaticEntryValue(entry, parsedValue);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <T> void updateEntryValue(MetaFieldRegistry.ConfigEntry<T> entry, Object newValue) {
-        entry.value = (T) newValue;
+    private <T> void updateStaticEntryValue(MetaFieldRegistry.ConfigEntry<T> entry, Object newValue) {
+        entry.setValue((T) newValue);
     }
     
     private void addLocalVariables(String key, String value, int lineNumber) {

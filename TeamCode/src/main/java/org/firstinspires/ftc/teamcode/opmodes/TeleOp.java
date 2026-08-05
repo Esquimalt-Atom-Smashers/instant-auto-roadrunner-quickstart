@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.opmodes;
 import com.example.instantauto.actions.AutoParser;
 import com.example.instantauto.actions.UserActionRegistry;
 import com.example.instantauto.configs.ConfigParser;
-import com.example.instantauto.configs.MetaField;
 import com.example.instantauto.configs.MetaFieldRegistry;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
@@ -20,7 +19,7 @@ public class TeleOp extends OpMode {
     @Override
     public void init() {
         telemetry.addLine("Reading from " + TextFileLocationBook.GENERAL_ROBOT_SETTING_FILE_NAME);
-        ConfigManager.init();
+        ConfigManager.init(this);
         autoParser.parseTeleOpConfig();
         telemetry.addLine("--- Config Parser Logs ---");
         List<String> logs = autoParser.getConfigLogs();
@@ -37,8 +36,6 @@ public class TeleOp extends OpMode {
     @Override
     public void loop() {
         dumpAllFields();
-        configParser.userUpdateEntry("gamepadLeftY" ,-gamepad1.left_stick_y);
-        printField("gamepadLeftY");
         telemetry.update();
     }
     @Override
@@ -50,7 +47,7 @@ public class TeleOp extends OpMode {
     private void printField(String name) {
         MetaFieldRegistry.ConfigEntry<?> entry = MetaFieldRegistry.getEntry(name);
         if (entry != null) {
-            telemetry.addLine(entry.fieldName + ": " + entry.value);
+            telemetry.addLine(entry.fieldName + ": " + entry.getValue());
         } else {
             telemetry.addLine(name + ": [Not Registered]");
         }

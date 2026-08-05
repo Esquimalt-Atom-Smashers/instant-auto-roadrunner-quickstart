@@ -86,7 +86,7 @@ public class AutoParser {
 
         // Check for required "Starting" field
         MetaFieldRegistry.ConfigEntry<?> startingEntry = MetaFieldRegistry.getEntry("Starting");
-        if (startingEntry == null || startingEntry.value == null || startingEntry.value.toString().trim().isEmpty()) {
+        if (startingEntry == null || startingEntry.getValue() == null || startingEntry.getValue().toString().trim().isEmpty()) {
             throw new RuntimeException("CRITICAL ERROR: Required 'Starting' field is missing or empty in " + autoFile.getName());
         }
     }

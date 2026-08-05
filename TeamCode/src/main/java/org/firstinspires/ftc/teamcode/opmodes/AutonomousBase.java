@@ -5,8 +5,6 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.InstantAction;
-import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.RaceAction;
 import com.acmerobotics.roadrunner.SequentialAction;
@@ -17,7 +15,6 @@ import com.example.instantauto.actions.UserActionRegistry;
 import com.example.instantauto.configs.ConfigParser;
 import com.example.instantauto.configs.MetaFieldRegistry;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -47,18 +44,16 @@ public class AutonomousBase extends OpMode {
 
     @Override
     public void init() {
-        ConfigManager.init();
+        ConfigManager.init(this);
         actionManager = new ActionManager();
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
 
         // Phase 1: Parse configuration to get the starting pose
         autoParser.parseAutoConfig(autoFile);
-        configParser.userUpdateEntry("sysTime", System.nanoTime());
 
         Pose2d pose;
         try {
-            org.firstinspires.ftc.teamcode.configs.Pose2d pose_wrapped = (org.firstinspires.ftc.teamcode.configs.Pose2d) MetaFieldRegistry.getEntry("Starting").value;
+            org.firstinspires.ftc.teamcode.configs.Pose2d pose_wrapped = (org.firstinspires.ftc.teamcode.configs.Pose2d) MetaFieldRegistry.getEntry("Starting").getValue();
             pose = pose_wrapped.getRRPose2d();
         } catch (Exception e) {
             throw new RuntimeException("Invalid Starting Pose: MUST BE POSE2D");
@@ -75,8 +70,8 @@ public class AutonomousBase extends OpMode {
         autoParser.parseActions();
 
         MetaFieldRegistry.ConfigEntry<?> titleEntry = MetaFieldRegistry.getEntry("Title");
-        if (titleEntry != null && titleEntry.value != null && !titleEntry.value.toString().trim().isEmpty()) {
-            telemetry.addLine("Auto Title: " + titleEntry.value);
+        if (titleEntry != null && titleEntry.getValue() != null && !titleEntry.getValue().toString().trim().isEmpty()) {
+            telemetry.addLine("Auto Title: " + titleEntry.getValue());
         }
 
         List<String> loadErrors = UserActionRegistry.getLoadErrors();
@@ -96,7 +91,6 @@ public class AutonomousBase extends OpMode {
             System.out.println("\n[ACTION ERRORS]:");
             for (String err : actionErrors) telemetry.addLine("  " + err);
         }
-        UserActionRegistry.registerCondition("withinDistance", () -> (distanceSensor.getDistance(DistanceUnit.CM) <= 20.0));
 
         telemetry.update();
     }
@@ -132,25 +126,10 @@ public class AutonomousBase extends OpMode {
         UserActionRegistry.clear();
     }
 
-    public class TelemetryAction implements com.acmerobotics.roadrunner.Action {
-        private OpMode opMode;
-        public TelemetryAction(OpMode opMode) {
-            this.opMode = opMode;
-        }
-        @Override
-        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-            configParser.userUpdateEntry("sysTime", System.nanoTime());
-            telemetry.addLine("sysTime: " + MetaFieldRegistry.getEntry("sysTime").value);
-            telemetry.update();
-            return true;
-        }
-    }
-
-    public com.acmerobotics.roadrunner.Action telemetryAction(OpMode opMode) {return new TelemetryAction(opMode);}
     private void printField(String name) {
         MetaFieldRegistry.ConfigEntry<?> entry = MetaFieldRegistry.getEntry(name);
         if (entry != null) {
-            telemetry.addLine(entry.fieldName + ": " + entry.value);
+            telemetry.addLine(entry.fieldName + ": " + entry.getValue());
         } else {
             telemetry.addLine(name + ": [Not Registered]");
         }

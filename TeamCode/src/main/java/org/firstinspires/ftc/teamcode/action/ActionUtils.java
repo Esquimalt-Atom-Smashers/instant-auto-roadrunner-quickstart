@@ -84,8 +84,8 @@ public class ActionUtils {
                     // Try to resolve as a variable
                     com.example.instantauto.configs.MetaFieldRegistry.ConfigEntry<?> entry =
                             com.example.instantauto.configs.MetaFieldRegistry.getEntry(part);
-                    if (entry != null && entry.value instanceof Number) {
-                        result[i] = ((Number) entry.value).doubleValue();
+                    if (entry != null && entry.getValue() instanceof Number) {
+                        result[i] = ((Number) entry.getValue()).doubleValue();
                     } else {
                         return null; // Failed to resolve
                     }

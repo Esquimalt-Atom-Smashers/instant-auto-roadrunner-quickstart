@@ -77,7 +77,7 @@ public class UserActionRegistry {
                         Object val = parseValue(valueExpr);
                         MetaFieldRegistry.ConfigEntry entry = MetaFieldRegistry.getEntry(varName);
                         if (entry != null) {
-                            entry.value = val;
+                            entry.setValue(val);
                         }
                         return false;
                     }
@@ -166,8 +166,8 @@ public class UserActionRegistry {
 
             // Try to resolve as a variable first
             MetaFieldRegistry.ConfigEntry<?> variableEntry = MetaFieldRegistry.getEntry(paramsLine);
-            if (variableEntry != null && variableEntry.value != null) {
-                paramObject = variableEntry.value;
+            if (variableEntry != null && variableEntry.getValue() != null) {
+                paramObject = variableEntry.getValue();
                 System.out.println("Variable Entry: " + paramObject + " " + name);
 
             }
@@ -333,8 +333,8 @@ public class UserActionRegistry {
 
         // 2. Check variable system
         MetaFieldRegistry.ConfigEntry<?> entry = MetaFieldRegistry.getEntry(condition);
-        if (entry != null && entry.value instanceof Boolean) {
-            return (Boolean) entry.value;
+        if (entry != null && entry.getValue() instanceof Boolean) {
+            return (Boolean) entry.getValue();
         }
         return false;
     }

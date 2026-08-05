@@ -150,8 +150,8 @@ public class ActionManager {
                 String poseName = parts[0].trim();
                 com.example.instantauto.configs.MetaFieldRegistry.ConfigEntry<?> entry =
                         com.example.instantauto.configs.MetaFieldRegistry.getEntry(poseName);
-                if (entry != null && entry.value instanceof Pose2d) {
-                    final Pose2d p = (Pose2d) entry.value;
+                if (entry != null && entry.getValue() instanceof Pose2d) {
+                    final Pose2d p = (Pose2d) entry.getValue();
                     try {
                         final double startTan = Double.parseDouble(parts[1].trim());
                         final double endTan = Double.parseDouble(parts[2].trim());
@@ -208,7 +208,7 @@ public class ActionManager {
                 com.example.instantauto.configs.MetaFieldRegistry.ConfigEntry<?> entry =
                         com.example.instantauto.configs.MetaFieldRegistry.getEntry(message);
                 if (entry != null) {
-                    finalOutput = ActionUtils.asString(entry.value);
+                    finalOutput = ActionUtils.asString(entry.getValue());
                 }
             }
             telemetry.addLine("PRINT: " + finalOutput);

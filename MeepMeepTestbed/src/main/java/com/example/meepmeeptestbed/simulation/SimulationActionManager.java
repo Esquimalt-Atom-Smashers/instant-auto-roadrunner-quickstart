@@ -97,8 +97,8 @@ public class SimulationActionManager {
                 String poseName = parts[0].trim();
                 com.example.instantauto.configs.MetaFieldRegistry.ConfigEntry<?> entry =
                         com.example.instantauto.configs.MetaFieldRegistry.getEntry(poseName);
-                if (entry != null && entry.value instanceof SimPose2d) {
-                    final SimPose2d p = (SimPose2d) entry.value;
+                if (entry != null && entry.getValue() instanceof SimPose2d) {
+                    final SimPose2d p = (SimPose2d) entry.getValue();
                     try {
                         final double startTan = Double.parseDouble(parts[1].trim());
                         final double endTan = Double.parseDouble(parts[2].trim());
@@ -140,7 +140,7 @@ public class SimulationActionManager {
                 com.example.instantauto.configs.MetaFieldRegistry.ConfigEntry<?> entry =
                         com.example.instantauto.configs.MetaFieldRegistry.getEntry(message);
                 if (entry != null) {
-                    finalOutput = SimulationActionUtils.asString(entry.value);
+                    finalOutput = SimulationActionUtils.asString(entry.getValue());
                 }
             }
             System.out.println("SIM PRINT: " + finalOutput);

@@ -33,7 +33,7 @@ public class MeepMeepTestbed {
 
         Pose2d startingPose;
         try {
-            SimPose2d wrappedPose = (SimPose2d) MetaFieldRegistry.getEntry("Starting").value;
+            SimPose2d wrappedPose = (SimPose2d) MetaFieldRegistry.getEntry("Starting").getValue();
             startingPose = wrappedPose.getRRPose2d();
             System.out.println("Starting Pose: " + startingPose.toString());
         } catch (Exception e) {
@@ -42,8 +42,8 @@ public class MeepMeepTestbed {
         }
 
         MetaFieldRegistry.ConfigEntry<?> titleEntry = MetaFieldRegistry.getEntry("Title");
-        if (titleEntry != null && titleEntry.value != null && !titleEntry.value.toString().trim().isEmpty()) {
-            System.out.println("Auto Title: " + titleEntry.value);
+        if (titleEntry != null && titleEntry.getValue() != null && !titleEntry.getValue().toString().trim().isEmpty()) {
+            System.out.println("Auto Title: " + titleEntry.getValue());
         }
 
         List<String> loadErrors = UserActionRegistry.getLoadErrors();
