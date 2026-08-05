@@ -164,14 +164,14 @@ public class UserActionRegistry {
 
             if (meta == null) return null;
 
-            // Try to resolve as a variable first
-            MetaFieldRegistry.ConfigEntry<?> variableEntry = MetaFieldRegistry.getEntry(paramsLine);
-            if (variableEntry != null && variableEntry.getValue() != null) {
-                paramObject = variableEntry.getValue();
-                System.out.println("Variable Entry: " + paramObject + " " + name);
-
-            }
-            return meta.create(paramObject != null ? paramObject : paramsLine);
+//            // Try to resolve as a variable first
+//            MetaFieldRegistry.ConfigEntry<?> variableEntry = MetaFieldRegistry.getEntry(paramsLine);
+//            if (variableEntry != null && variableEntry.getValue() != null) {
+//                paramObject = variableEntry.getValue();
+//                System.out.println("Variable Entry: " + paramObject + " " + name);
+//
+//            }
+            return meta.create(paramsLine);
         } else {
             // Action without parameters
             name = line;

@@ -28,7 +28,7 @@ public class ActionManager {
         UserActionRegistry.register(new MiniAction("SPLINE.TO", this::splineToFactory));
 
         UserActionRegistry.register(new MiniAction("PRINT", obj ->
-                ActionUtils.wrap(new PrintAction(ActionUtils.asString(obj)))));
+                ActionUtils.wrap(new PrintAction(obj))));
 
         UserActionRegistry.register(new MiniAction("PARALLEL", params -> {
             List<Action> actions = ActionUtils.asActions(params, mecanumDrive);
@@ -177,42 +177,35 @@ public class ActionManager {
 
     public class PrintAction implements com.acmerobotics.roadrunner.Action {
         String message;
-        boolean isVariable = false;
+        String varName = null;
 
-        public PrintAction(String message) {
-            this.message = message;
-            // Check if this looks like a variable name (no spaces, no quotes)
-            if (!message.contains(" ") && !message.startsWith("\"")) {
-                isVariable = true;
-            } else if (message.startsWith("\"") && message.endsWith("\"")) {
-                this.message = message.substring(1, message.length() - 1);
+        public PrintAction(Object params) {
+            if (params instanceof String) {
+                String s = (String) params;
+                if (s.startsWith("\"") && s.endsWith("\"")) {
+                    this.message = s.substring(1, s.length() - 1);
+                } else {
+                    this.varName = s;
+                    this.message = s;
+                }
+            } else {
+                this.message = ActionUtils.asString(params);
             }
-        }
-
-        public PrintAction(double n) {
-            this.message = String.format(Locale.US, "%.2f", n);
-        }
-
-        public PrintAction(int n) {
-            this.message = String.format(Locale.US, "%d", n);
-        }
-
-        public PrintAction(boolean b) {
-            this.message = String.format(Locale.US, "%b", b);
         }
 
         @Override
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
             String finalOutput = message;
-            if (isVariable) {
+            if (varName != null) {
                 com.example.instantauto.configs.MetaFieldRegistry.ConfigEntry<?> entry =
-                        com.example.instantauto.configs.MetaFieldRegistry.getEntry(message);
+                        com.example.instantauto.configs.MetaFieldRegistry.getEntry(varName);
                 if (entry != null) {
                     finalOutput = ActionUtils.asString(entry.getValue());
                 }
             }
+            telemetry.clearAll();
             telemetry.addLine("PRINT: " + finalOutput);
-//            telemetryPacket.put("PRINT", finalOutput);
+            System.out.println("PRINT: " + finalOutput);
             telemetry.update();
             return true;
         }

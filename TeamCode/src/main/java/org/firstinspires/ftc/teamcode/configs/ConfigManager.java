@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 public class ConfigManager {
@@ -26,6 +27,7 @@ public class ConfigManager {
         registerField("motorName", String.class, "motorName");
         registerField("gamepadLeftY", Double.class, (Supplier<Double>) () -> (double) opMode.gamepad1.left_stick_y);
         registerField("sysTime", Long.class, (Supplier<Long>) System::nanoTime);
+        registerField("distance", Double.class, (Supplier<Double>) () -> (opMode.hardwareMap.get(DistanceSensor.class, "distanceSensor").getDistance(DistanceUnit.CM)));
 
         // New required fields for Auto
         registerField("Title", String.class, "");
@@ -35,4 +37,6 @@ public class ConfigManager {
         registerCondition("is_active", () -> true);
         registerCondition("withinDistance", () -> (opMode.hardwareMap.get(DistanceSensor.class, "distanceSensor").getDistance(DistanceUnit.CM) <= 20.0));
     }
+
+
 }

@@ -33,8 +33,6 @@ public class AutonomousBase extends OpMode {
     private final File autoFile;
     private List<com.acmerobotics.roadrunner.Action> actions;
     private MecanumDrive mecanumDrive;
-    private ConfigParser configParser = new ConfigParser();
-    private DistanceSensor distanceSensor;
 
     public AutonomousBase(AutoParser autoParser, File autoFile) {
         this.autoParser = autoParser;
