@@ -62,11 +62,35 @@ public class ActionManager {
         this.telemetry = telemetry;
     }
 
+    /**
+     * Wraps a BuilderAction to cache the built trajectory on first run.
+     * This prevents re-building the trajectory on every loop iteration,
+     * which is essential for actions used inside if/else blocks that aren't fused by merge().
+     */
+    private Action createCachedBuilderAction(ActionUtils.BuilderAction delegate) {
+        return new ActionUtils.BuilderAction() {
+            private com.acmerobotics.roadrunner.Action cachedAction;
+
+            @Override
+            public TrajectoryActionBuilder apply(TrajectoryActionBuilder builder) {
+                return delegate.apply(builder);
+            }
+
+            @Override
+            public boolean run() {
+                if (cachedAction == null) {
+                    cachedAction = apply(mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())).build();
+                }
+                return cachedAction.run(new TelemetryPacket());
+            }
+        };
+    }
+
     private Action strafeToFactory(Object params) {
         // Handle Case 1: Received a Pose2d object (Variable Lookup)
         if (params instanceof Pose2d) {
             final Pose2d p = (Pose2d) params;
-            return new ActionUtils.BuilderAction() {
+            ActionUtils.BuilderAction builderAction = new ActionUtils.BuilderAction() {
                 @Override
                 public TrajectoryActionBuilder apply(TrajectoryActionBuilder builder) {
                     return builder.strafeToSplineHeading(new Vector2d(p.x, p.y), Math.toRadians(p.heading));
@@ -76,12 +100,13 @@ public class ActionManager {
                     return apply(mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())).build().run(new TelemetryPacket());
                 }
             };
+            return createCachedBuilderAction(builderAction);
         }
 
         // Handle Case 2: Received a String (Literal Parameters "x, y, h")
         final double[] d = ActionUtils.asDoubles(params, 3);
         if (d != null) {
-            return new ActionUtils.BuilderAction() {
+            ActionUtils.BuilderAction builderAction = new ActionUtils.BuilderAction() {
                 @Override
                 public TrajectoryActionBuilder apply(TrajectoryActionBuilder builder) {
                     return builder.strafeToSplineHeading(new Vector2d(d[0], d[1]), Math.toRadians(d[2]));
@@ -91,6 +116,7 @@ public class ActionManager {
                     return apply(mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())).build().run(new TelemetryPacket());
                 }
             };
+            return createCachedBuilderAction(builderAction);
         }
         return null;
     }
@@ -104,7 +130,7 @@ public class ActionManager {
             if (parts.length == 5) {
                 final double[] d = ActionUtils.asDoubles(s, 5);
                 if (d != null) {
-                    return new ActionUtils.BuilderAction() {
+                    ActionUtils.BuilderAction builderAction = new ActionUtils.BuilderAction() {
                         @Override
                         public TrajectoryActionBuilder apply(TrajectoryActionBuilder builder) {
                             return builder.setTangent(Math.toRadians(d[3]))
@@ -115,6 +141,7 @@ public class ActionManager {
                             return apply(mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())).build().run(new TelemetryPacket());
                         }
                     };
+                    return createCachedBuilderAction(builderAction);
                 }
             }
 
@@ -128,7 +155,7 @@ public class ActionManager {
                     try {
                         final double startTan = Double.parseDouble(parts[1].trim());
                         final double endTan = Double.parseDouble(parts[2].trim());
-                        return new ActionUtils.BuilderAction() {
+                        ActionUtils.BuilderAction builderAction = new ActionUtils.BuilderAction() {
                             @Override
                             public TrajectoryActionBuilder apply(TrajectoryActionBuilder builder) {
                                 return builder.setTangent(Math.toRadians(startTan))
@@ -139,6 +166,7 @@ public class ActionManager {
                                 return apply(mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())).build().run(new TelemetryPacket());
                             }
                         };
+                        return createCachedBuilderAction(builderAction);
                     } catch (NumberFormatException ignored) {}
                 }
             }

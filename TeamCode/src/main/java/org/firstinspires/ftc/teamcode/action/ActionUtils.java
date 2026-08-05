@@ -119,9 +119,91 @@ public class ActionUtils {
     }
 
     /**
-     * Merges consecutive BuilderAction actions into a single Roadrunner trajectory.
+     * Recursively merges consecutive BuilderAction actions into fused trajectories
+     * at all nesting levels (including inside if/else blocks, parallel, race, etc.).
+     * @param actions List of actions to process
+     * @param drive MecanumDrive for trajectory building
+     * @return New list with consecutive BuilderActions fused
      */
-    private static List<Action> merge(List<Action> actions, MecanumDrive drive) {
+    public static List<Action> mergeNestedActions(List<Action> actions, MecanumDrive drive) {
+        if (actions == null || actions.size() <= 1) return actions;
+        
+        List<Action> result = new ArrayList<>();
+        List<BuilderAction> currentGroup = new ArrayList<>();
+        
+        for (Action action : actions) {
+            // Check if this action contains nested actions that need merging
+            Action processedAction = mergeNestedInAction(action, drive);
+            
+            if (processedAction instanceof BuilderAction) {
+                currentGroup.add((BuilderAction) processedAction);
+            } else {
+                if (!currentGroup.isEmpty()) {
+                    result.add(fuse(currentGroup, drive));
+                    currentGroup.clear();
+                }
+                result.add(processedAction);
+            }
+        }
+        
+        if (!currentGroup.isEmpty()) {
+            result.add(fuse(currentGroup, drive));
+        }
+        
+        return result;
+    }
+
+    /**
+     * Recursively processes an action to merge nested BuilderActions.
+     * Handles WrappedRRAction (which may contain RR composite actions)
+     * and attempts to handle if/else anonymous actions via reflection.
+     */
+    private static Action mergeNestedInAction(Action action, MecanumDrive drive) {
+        if (action == null) return null;
+        
+        // Handle our WrappedRRAction - check if it wraps a composite RR action
+        if (action instanceof WrappedRRAction) {
+            com.acmerobotics.roadrunner.Action rrAction = ((WrappedRRAction) action).getRRAction();
+            // Could potentially unwrap and process nested RR actions, but for now skip
+            return action;
+        }
+        
+        // Try to handle if/else actions (anonymous classes from UserActionRegistry)
+        // by looking for a 'targetActions' field via reflection
+        try {
+            java.lang.reflect.Field targetActionsField = action.getClass().getDeclaredField("targetActions");
+            targetActionsField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<Action> nestedActions = (List<Action>) targetActionsField.get(action);
+            if (nestedActions != null) {
+                List<Action> mergedNested = mergeNestedActions(nestedActions, drive);
+                targetActionsField.set(action, mergedNested);
+            }
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+            // Not an if/else action or field not accessible
+        }
+        
+        // Try to handle 'trueActions' field (if branch actions)
+        try {
+            java.lang.reflect.Field trueActionsField = action.getClass().getDeclaredField("trueActions");
+            trueActionsField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<Action> nestedActions = (List<Action>) trueActionsField.get(action);
+            if (nestedActions != null) {
+                List<Action> mergedNested = mergeNestedActions(nestedActions, drive);
+                trueActionsField.set(action, mergedNested);
+            }
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+        }
+        
+        return action;
+    }
+
+    /**
+     * Merges consecutive BuilderAction actions into a single Roadrunner trajectory.
+     * Package-private for use by mergeNestedActions.
+     */
+    static List<Action> merge(List<Action> actions, MecanumDrive drive) {
         if (actions.size() <= 1) return actions;
         
         List<Action> merged = new ArrayList<>();

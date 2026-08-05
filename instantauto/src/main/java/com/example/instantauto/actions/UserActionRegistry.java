@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
+import java.util.function.Function;
 
 /**
  * Registry for MetaActions. Handles both primitive "Mini Actions" and
@@ -21,9 +22,22 @@ public class UserActionRegistry {
     //Where all your conditional suppliers from java and text files are stored
     private static final Map<String, BooleanSupplier> conditionSuppliers = new HashMap<>();
     private static final List<String> loadErrors = new ArrayList<>();
+    
+    // Callback for fusing nested actions (e.g., inside if/else blocks)
+    // Set by the consuming module (e.g., TeamCode) which has access to MecanumDrive
+    private static Function<List<Action>, List<Action>> actionMerger = actions -> actions;
 
     public static void register(MetaAction action) {
         registry.put(action.getIdentifier().toUpperCase(), action);
+    }
+
+    /**
+     * Sets a function to merge/fuse nested actions (e.g., consecutive BuilderActions in if/else blocks).
+     * Should be called during initialization by the module that has access to MecanumDrive.
+     * @param merger Function that takes a list of actions and returns a fused list
+     */
+    public static void setActionMerger(Function<List<Action>, List<Action>> merger) {
+        actionMerger = merger;
     }
 
     /**
@@ -302,7 +316,8 @@ public class UserActionRegistry {
             Action a = createAction(sub);
             if (a != null) actions.add(a);
         }
-        return actions;
+        // Apply fusion/merging for nested actions (e.g., consecutive BuilderActions)
+        return actionMerger.apply(actions);
     }
 
     public static boolean evaluateCondition(String condition) {

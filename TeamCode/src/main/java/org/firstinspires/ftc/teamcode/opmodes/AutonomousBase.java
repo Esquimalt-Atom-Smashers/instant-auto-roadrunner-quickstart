@@ -68,6 +68,9 @@ public class AutonomousBase extends OpMode {
         mecanumDrive = new MecanumDrive(hardwareMap, pose);
         actionManager.init(mecanumDrive, telemetry);
 
+        // Register nested action merger for if/else blocks (must be before parseActions)
+        UserActionRegistry.setActionMerger(actions -> ActionUtils.mergeNestedActions(actions, mecanumDrive));
+
         // Phase 3: Parse actions (now that primitives are registered by actionManager)
         autoParser.parseActions();
 
@@ -103,6 +106,8 @@ public class AutonomousBase extends OpMode {
         actions.clear();
         List<Action> mergedActions = ActionUtils.asActions(autoParser.getActionContent(), mecanumDrive);
         if (mergedActions != null) {
+            // Also merge any nested actions in top-level actions (e.g., if/else at top level)
+            mergedActions = ActionUtils.mergeNestedActions(mergedActions, mecanumDrive);
             for (Action action : mergedActions) {
                 actions.add(ActionUtils.adapt(action, telemetry));
             }
