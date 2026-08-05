@@ -114,8 +114,7 @@ public class AutonomousBase extends OpMode {
         }
         Actions.runBlocking(
                 new RaceAction(
-                        new SequentialAction(actions),
-                        telemetryAction(this)
+                        new SequentialAction(actions)
                 )
         );
 
@@ -141,7 +140,7 @@ public class AutonomousBase extends OpMode {
         @Override
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
             configParser.userUpdateEntry("sysTime", System.nanoTime());
-            System.out.println("sysTime: " + MetaFieldRegistry.getEntry("sysTime").value);
+            telemetry.addLine("sysTime: " + MetaFieldRegistry.getEntry("sysTime").value);
             telemetry.update();
             return true;
         }

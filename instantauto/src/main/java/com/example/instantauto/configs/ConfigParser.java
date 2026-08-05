@@ -139,6 +139,8 @@ public class ConfigParser {
                 return Double.parseDouble(val);
             } else if (type == Integer.class || type == int.class) {
                 return Integer.parseInt(val);
+            } else if (type == Long.class || type == long.class) {
+                return Long.parseLong(val);
             } else if (type == Boolean.class || type == boolean.class) {
                 if (val.equalsIgnoreCase("true")) return true;
                 if (val.equalsIgnoreCase("false")) return false;
