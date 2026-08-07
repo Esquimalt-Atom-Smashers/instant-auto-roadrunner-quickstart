@@ -310,6 +310,15 @@ public class UserActionRegistry {
         return -1;
     }
 
+    /**
+     * Applies the registered action merger to a list of actions.
+     * @param actions List of actions to merge
+     * @return Merged list of actions
+     */
+    public static List<Action> applyMerger(List<Action> actions) {
+        return actionMerger.apply(actions);
+    }
+
     private static List<Action> parseActionsFromBlock(String block) {
         List<Action> actions = new ArrayList<>();
         for (String sub : splitByTopLevelCommas(block)) {

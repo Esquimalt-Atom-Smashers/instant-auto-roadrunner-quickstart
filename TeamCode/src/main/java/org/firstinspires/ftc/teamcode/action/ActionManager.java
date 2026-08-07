@@ -60,6 +60,9 @@ public class ActionManager {
         UserActionRegistry.register(new MiniAction("HELLO.WORLD", params -> ActionUtils.wrap(new PrintAction("Hello World!"))));
         this.mecanumDrive = drivebase;
         this.telemetry = telemetry;
+
+        // Set the action merger to enable automatic trajectory fusion for nested actions
+        UserActionRegistry.setActionMerger(actions -> ActionUtils.mergeNestedActions(actions, mecanumDrive));
     }
 
     /**
