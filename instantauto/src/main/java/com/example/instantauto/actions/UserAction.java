@@ -37,22 +37,19 @@ public class UserAction implements MetaAction {
             }
         }
 
-        // Apply merging/fusion to the sub-actions
-        final List<Action> mergedActions = UserActionRegistry.applyMerger(actions);
-
         return new Action() {
             private int currentIndex = 0;
 
             @Override
             public boolean run() {
-                if (currentIndex >= mergedActions.size()) return false;
+                if (currentIndex >= actions.size()) return false;
                 
-                Action current = mergedActions.get(currentIndex);
+                Action current = actions.get(currentIndex);
                 if (current == null || !current.run()) {
                     currentIndex++;
                 }
                 
-                return currentIndex < mergedActions.size();
+                return currentIndex < actions.size();
             }
         };
     }
