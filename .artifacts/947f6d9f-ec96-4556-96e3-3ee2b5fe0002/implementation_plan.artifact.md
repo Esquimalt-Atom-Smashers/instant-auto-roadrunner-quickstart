@@ -1,31 +1,67 @@
-# Fix: Parallel Action Errors in First_Auto.java
+# Diagnostic Enhancement: Tracing Action Execution Flow in First_Auto.java
 
 ## Problem
-The First_Auto.java file has several issues with its ParallelAction usage:
-1. Invalid Java syntax: if/else statements directly in ParallelAction constructor
-2. Invalid servo position: -0.5 (should be 0-1 range)
-3. Missing Action wrapper for servo control operations
-4. Incorrect ParallelAction structure
+After fixing parallel action execution, the user reports that while the parallel action works correctly, the subsequent straight-line action back to the origin does not execute or is not visible in its execution.
 
 ## Root Cause
-The user is attempting to put Java control flow statements (if/else) directly inside a RoadRunner ParallelAction constructor, which is invalid syntax. Additionally, they're trying to execute direct hardware control without wrapping it in a proper Action implementation.
+Without visibility into the execution flow, it's impossible to determine:
+1. Whether the second action is being reached at all
+2. Whether the second action is completing successfully or hanging
+3. Whether any exceptions are being thrown silently during execution
 
 ## Solution
-1. Create a custom ServoAction class that implements com.acmerobotics.roadrunner.Action
-2. Fix the ParallelAction usage to properly wrap RoadRunner trajectories and ServoActions
-3. Correct servo position values to valid range (0-1)
-4. Restructure the autonomous logic for proper parallel execution
+Add diagnostic telemetry to trace execution flow and catch potential exceptions, providing visibility into the action lifecycle without changing the core logic.
 
-## Files to Modify
-- TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/First_Auto.java
+## Changes Made
+**File:** `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/opmodes/First_Auto.java`
 
-## Changes
-1. Add ServoAction inner class implementing Action interface
-2. Fix ParallelAction constructor to contain valid Action instances
-3. Correct servo position values
-4. Structure the autonomous sequence properly
+### Added Execution Tracing:
+1. **Parallel action tracing:**
+   ```java
+   telemetry.addLine("Starting parallel action");
+   // ... parallel action execution ...
+   telemetry.addLine("Parallel action completed");
+   ```
 
-## Verification
-1. Build success: ./gradlew :TeamCode:assembleDebug
-2. Verify no syntax errors in First_Auto.java
-3. Test that parallel execution works as intended (driving + servo control)
+2. **Return action tracing:**
+   ```java
+   telemetry.addLine("Starting return action");
+   // ... return action execution ...
+   telemetry.addLine("Return action completed");
+   ```
+
+3. **Exception handling in ServoAction:**
+   ```java
+   @Override
+   public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+       try {
+           // ... existing servo logic ...
+           return true;
+       } catch (Exception e) {
+           telemetry.addLine("ServoAction error: " + e.getMessage());
+           return true;  // Complete on error to prevent hanging
+       }
+   }
+   ```
+
+## Verification Plan
+1. Build: `./gradlew :TeamCode:assembleDebug`
+2. Run autonomous and observe Driver Station telemetry
+3. Check for the trace messages to determine execution flow:
+   - If "Starting return action" is missing → execution not reaching second action
+   - If "Starting return action" appears but "Return action completed" is missing → second action hanging or throwing exception
+   - If both appear → second action executing and completing successfully
+   - Check for "ServoAction error" messages → indicates runtime issues in servo control
+
+## Expected Diagnostic Output
+When functioning correctly, telemetry should show:
+```
+Starting parallel action
+[parallel action executes]
+Parallel action completed
+Starting return action
+[return action executes]
+Return action completed
+```
+
+This approach provides the user with clear visibility into the execution flow without making assumptions about the root cause, enabling them to diagnose and fix the specific issue preventing the second action from being observed.
