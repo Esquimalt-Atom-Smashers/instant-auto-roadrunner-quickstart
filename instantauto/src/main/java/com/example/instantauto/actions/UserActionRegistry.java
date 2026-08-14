@@ -163,14 +163,6 @@ public class UserActionRegistry {
             MetaAction meta = registry.get(name.toUpperCase());
 
             if (meta == null) return null;
-
-//            // Try to resolve as a variable first
-//            MetaFieldRegistry.ConfigEntry<?> variableEntry = MetaFieldRegistry.getEntry(paramsLine);
-//            if (variableEntry != null && variableEntry.getValue() != null) {
-//                paramObject = variableEntry.getValue();
-//                System.out.println("Variable Entry: " + paramObject + " " + name);
-//
-//            }
             return meta.create(paramsLine);
         } else {
             // Action without parameters
