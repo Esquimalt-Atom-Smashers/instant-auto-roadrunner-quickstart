@@ -60,9 +60,6 @@ public class ActionManager {
         UserActionRegistry.register(new MiniAction("HELLO.WORLD", params -> ActionUtils.wrap(new PrintAction("Hello World!"))));
         this.mecanumDrive = drivebase;
         this.telemetry = telemetry;
-
-        // Set the action merger to enable automatic trajectory fusion for nested actions
-        UserActionRegistry.setActionMerger(actions -> ActionUtils.mergeNestedActions(actions, mecanumDrive));
     }
 
     /**
@@ -90,20 +87,25 @@ public class ActionManager {
     }
 
     private Action strafeToFactory(Object params) {
-        // Handle Case 1: Received a Pose2d object (Variable Lookup)
-        if (params instanceof Pose2d) {
-            final Pose2d p = (Pose2d) params;
-            ActionUtils.BuilderAction builderAction = new ActionUtils.BuilderAction() {
-                @Override
-                public TrajectoryActionBuilder apply(TrajectoryActionBuilder builder) {
-                    return builder.strafeToSplineHeading(new Vector2d(p.x, p.y), Math.toRadians(p.heading));
-                }
-                @Override
-                public boolean run() {
-                    return apply(mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())).build().run(new TelemetryPacket());
-                }
-            };
-            return createCachedBuilderAction(builderAction);
+        // Handle Case 1: Received a variable name (String) that contains a Pose2d
+        if (params instanceof String) {
+            String varName = (String) params;
+            com.example.instantauto.configs.MetaFieldRegistry.ConfigEntry<?> entry =
+                    com.example.instantauto.configs.MetaFieldRegistry.getEntry(varName);
+            if (entry != null && entry.getValue() instanceof Pose2d) {
+                final Pose2d p = (Pose2d) entry.getValue();
+                ActionUtils.BuilderAction builderAction = new ActionUtils.BuilderAction() {
+                    @Override
+                    public TrajectoryActionBuilder apply(TrajectoryActionBuilder builder) {
+                        return builder.strafeToSplineHeading(new Vector2d(p.x, p.y), Math.toRadians(p.heading));
+                    }
+                    @Override
+                    public boolean run() {
+                        return apply(mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())).build().run(new TelemetryPacket());
+                    }
+                };
+                return createCachedBuilderAction(builderAction);
+            }
         }
 
         // Handle Case 2: Received a String (Literal Parameters "x, y, h")

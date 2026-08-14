@@ -113,7 +113,7 @@ public class ActionUtils {
                     UserActionRegistry.addError("Malformed action: " + sub);
                 }
             }
-            return mergeNestedActions(actions, drive);
+            return merge(actions, drive);
         }
         return null;
     }
@@ -160,59 +160,72 @@ public class ActionUtils {
      */
     private static Action mergeNestedInAction(Action action, MecanumDrive drive) {
         if (action == null) return null;
-
+        
         // Handle our WrappedRRAction - check if it wraps a composite RR action
         if (action instanceof WrappedRRAction) {
             com.acmerobotics.roadrunner.Action rrAction = ((WrappedRRAction) action).getRRAction();
             // Could potentially unwrap and process nested RR actions, but for now skip
             return action;
         }
-
-        // List of fields to check for nested actions
-        // 'targetActions' and 'trueActions' are used in UserActionRegistry's if/else
-        // 'actions' is used in UserAction
-        // 'falseActions' might be used if if/else is expanded
-        String[] fieldsToCheck = {"targetActions", "trueActions", "falseActions", "actions"};
-
-        for (String fieldName : fieldsToCheck) {
-            try {
-                java.lang.reflect.Field field = findField(action.getClass(), fieldName);
-                if (field != null) {
-                    field.setAccessible(true);
-                    Object value = field.get(action);
-                    if (value instanceof List) {
-                        @SuppressWarnings("unchecked")
-                        List<Action> nestedActions = (List<Action>) value;
-                        if (nestedActions != null) {
-                            List<Action> mergedNested = mergeNestedActions(nestedActions, drive);
-                            field.set(action, mergedNested);
-                        }
-                    }
-                }
-            } catch (IllegalAccessException ignored) {
+        
+        // Try to handle if/else actions (anonymous classes from UserActionRegistry)
+        // by looking for a 'targetActions' field via reflection
+        try {
+            java.lang.reflect.Field targetActionsField = action.getClass().getDeclaredField("targetActions");
+            targetActionsField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<Action> nestedActions = (List<Action>) targetActionsField.get(action);
+            if (nestedActions != null) {
+                List<Action> mergedNested = mergeNestedActions(nestedActions, drive);
+                targetActionsField.set(action, mergedNested);
             }
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+            // Not an if/else action or field not accessible
         }
-
+        
+        // Try to handle 'trueActions' field (if branch actions)
+        try {
+            java.lang.reflect.Field trueActionsField = action.getClass().getDeclaredField("trueActions");
+            trueActionsField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<Action> nestedActions = (List<Action>) trueActionsField.get(action);
+            if (nestedActions != null) {
+                List<Action> mergedNested = mergeNestedActions(nestedActions, drive);
+                trueActionsField.set(action, mergedNested);
+            }
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+        }
+        
         return action;
     }
 
     /**
-     * Finds a field in a class or its superclasses, also checking for anonymous class captured variables (val$ prefix).
+     * Merges consecutive BuilderAction actions into a single Roadrunner trajectory.
+     * Package-private for use by mergeNestedActions.
      */
-    private static java.lang.reflect.Field findField(Class<?> clazz, String name) {
-        while (clazz != null) {
-            try {
-                return clazz.getDeclaredField(name);
-            } catch (NoSuchFieldException e) {
-                // Try val$ prefix for captured variables in anonymous classes
-                try {
-                    return clazz.getDeclaredField("val$" + name);
-                } catch (NoSuchFieldException ignored) {
+    static List<Action> merge(List<Action> actions, MecanumDrive drive) {
+        if (actions.size() <= 1) return actions;
+        
+        List<Action> merged = new ArrayList<>();
+        List<BuilderAction> group = new ArrayList<>();
+        
+        for (Action a : actions) {
+            if (a instanceof BuilderAction) {
+                group.add((BuilderAction) a);
+            } else {
+                if (!group.isEmpty()) {
+                    merged.add(fuse(group, drive));
+                    group = new ArrayList<>();
                 }
+                merged.add(a);
             }
-            clazz = clazz.getSuperclass();
         }
-        return null;
+        
+        if (!group.isEmpty()) {
+            merged.add(fuse(group, drive));
+        }
+        
+        return merged;
     }
 
     private static Action fuse(List<BuilderAction> group, MecanumDrive drive) {

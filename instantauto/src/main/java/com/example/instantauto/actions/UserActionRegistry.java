@@ -163,14 +163,6 @@ public class UserActionRegistry {
             MetaAction meta = registry.get(name.toUpperCase());
 
             if (meta == null) return null;
-
-//            // Try to resolve as a variable first
-//            MetaFieldRegistry.ConfigEntry<?> variableEntry = MetaFieldRegistry.getEntry(paramsLine);
-//            if (variableEntry != null && variableEntry.getValue() != null) {
-//                paramObject = variableEntry.getValue();
-//                System.out.println("Variable Entry: " + paramObject + " " + name);
-//
-//            }
             return meta.create(paramsLine);
         } else {
             // Action without parameters
@@ -308,15 +300,6 @@ public class UserActionRegistry {
             if (level == 0) return i;
         }
         return -1;
-    }
-
-    /**
-     * Applies the registered action merger to a list of actions.
-     * @param actions List of actions to merge
-     * @return Merged list of actions
-     */
-    public static List<Action> applyMerger(List<Action> actions) {
-        return actionMerger.apply(actions);
     }
 
     private static List<Action> parseActionsFromBlock(String block) {
