@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.configs;
 
 import static com.example.instantauto.actions.UserActionRegistry.registerCondition;
 import static com.example.instantauto.configs.MetaFieldRegistry.registerField;
+import static com.example.instantauto.configs.MetaFieldRegistry.registerSupplier;
 import static com.example.instantauto.configs.MetaFieldRegistry.registerType;
 
 import com.example.instantauto.actions.UserActionRegistry;
@@ -28,6 +29,8 @@ public class ConfigManager {
         registerField("gamepadLeftY", Double.class, (Supplier<Double>) () -> (double) opMode.gamepad1.left_stick_y);
         registerField("sysTime", Long.class, (Supplier<Long>) System::nanoTime);
         registerField("distance", Double.class, (Supplier<Double>) () -> (opMode.hardwareMap.get(DistanceSensor.class, "distanceSensor").getDistance(DistanceUnit.CM)));
+        registerSupplier("batteryVoltage", Double.class,
+                () -> opMode.hardwareMap.voltageSensor.iterator().next().getVoltage());
 
         // New required fields for Auto
         registerField("Title", String.class, "");
