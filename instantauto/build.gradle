@@ -78,7 +78,11 @@ publishing {
 
 // Signing configuration (only activate when GPG key is available)
 signing {
-    if (project.hasProperty('signing.keyId') && project.hasProperty('signing.password') && project.hasProperty('signing.secretKeyRingFile')) {
+    def signingKey = System.getenv("GPG_PRIVATE_KEY")
+    def signingPassword = System.getenv("GPG_PASSPHRASE")
+
+    if (signingKey && signingPassword) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
         sign publishing.publications.mavenJava
     }
 }
