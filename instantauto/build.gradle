@@ -67,13 +67,10 @@ publishing {
         }
         maven {
             name = 'centralPortal'
-            url = 'https://central.sonatype.com/api/v1/publisher'
+            url = 'https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/'
             credentials {
                 username = System.getenv('CENTRAL_PORTAL_USERNAME')
                 password = System.getenv('CENTRAL_PORTAL_TOKEN')
-            }
-            authentication {
-                create(BasicAuthentication) // Central Portal uses basic auth with token as password
             }
         }
     }
