@@ -44,9 +44,6 @@ jobs:
       - name: Configure Gradle properties
         run: |
           cat >> gradle.properties << EOF
-          signing.keyId=${{ secrets.GPG_KEY_ID }}
-          signing.password=${{ secrets.GPG_PASSPHRASE }}
-          signing.secretKeyRingFile=${{ runner.temp }}/secring.gpg
           centralPortalUsername=${{ secrets.CENTRAL_PORTAL_USERNAME }}
           centralPortalToken=${{ secrets.CENTRAL_PORTAL_TOKEN }}
           EOF
@@ -67,9 +64,8 @@ jobs:
         env:
           CENTRAL_PORTAL_USERNAME: ${{ secrets.CENTRAL_PORTAL_USERNAME }}
           CENTRAL_PORTAL_TOKEN: ${{ secrets.CENTRAL_PORTAL_TOKEN }}
-          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-          GPG_SECRET_KEY_RING_FILE: ${{ runner.temp }}/secring.gpg
 
       - name: Verify publication
         run: |
