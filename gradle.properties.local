@@ -1,0 +1,14 @@
+# ============================================================
+# LOCAL PUBLISHING CREDENTIALS - DO NOT COMMIT TO GIT
+# This file is in .gitignore and will not be tracked
+# ============================================================
+
+# Central Portal Publishing Credentials
+# From: https://central.sonatype.com/account
+centralPortalUsername=hMTv1C
+centralPortalToken=1EfE0X1tpo0Q2QTefA0vcWqAJiCCcejEs
+
+# GPG Signing configuration (required for Maven Central)
+signing.keyId=2447A9B3F7D06314
+signing.password=BoscoPass
+signing.secretKeyRingFile=C:/Users/bco44/.gnupg/secring.gpg
