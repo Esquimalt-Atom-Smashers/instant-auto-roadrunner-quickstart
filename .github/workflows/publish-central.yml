@@ -56,6 +56,12 @@ jobs:
         run: |
           sed -i "s/version = '.*'/version = '${{ github.event.inputs.version }}'/" instantauto/build.gradle
 
+      - name: Test signing
+        run: ./gradlew :instantauto:signMavenJavaPublication
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
       - name: Publish to Maven Central
         run: ./gradlew :instantauto:publishMavenJavaPublicationToCentralPortal --no-configuration-cache
         env:
@@ -86,9 +92,3 @@ jobs:
         run: |
           echo "Deployment submitted to Maven Central."
           echo "Check https://central.sonatype.com/publishing"
-
-      - name: Test signing
-        run: ./gradlew :instantauto:signMavenJavaPublication
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
