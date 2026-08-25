@@ -69,8 +69,8 @@ publishing {
             name = 'centralPortal'
             url = 'https://central.sonatype.com/api/v1/publisher'
             credentials {
-                username = System.getenv('hMTv1C')
-                password = System.getenv('1EfE0X1tpo0Q2QTefA0vcWqAJiCCcejEs')
+                username = System.getenv('CENTRAL_PORTAL_USERNAME')
+                password = System.getenv('CENTRAL_PORTAL_TOKEN')
             }
             authentication {
                 create(BasicAuthentication) // Central Portal uses basic auth with token as password
