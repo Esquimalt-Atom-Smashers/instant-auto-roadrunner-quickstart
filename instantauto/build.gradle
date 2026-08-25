@@ -1,10 +1,94 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
+    id 'signing'
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+group = 'io.github.bosco-maker'  // Change to your GitHub namespace (e.g., io.github.bosco-maker)
+version = '1.0.0'  // Your version
+
+// Sources and Javadoc jars (required for Maven Central)
+tasks.register('sourcesJar', Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
+
+tasks.register('javadocJar', Jar) {
+    archiveClassifier.set('javadoc')
+    from javadoc
+}
+
+// Publishing configuration
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact tasks.named('sourcesJar')
+            artifact tasks.named('javadocJar')
+            
+            pom {
+                name = 'InstantAuto'
+                description = 'Text-file-based autonomous programming system for FTC integrating with RoadRunner'
+                url = 'https://github.com/bosco-maker/instant-auto-roadrunner-quickstart'
+                
+                licenses {
+                    license {
+                        name = 'MIT License'  // Or your license
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id = 'bosco-maker'
+                        name = 'Bosco Tu'
+                        email = 'bco445776@gmail.com'
+                    }
+                }
+                
+                scm {
+                    connection = 'scm:git:https://github.com/bosco-maker/instant-auto-roadrunner-quickstart.git'
+                    developerConnection = 'scm:git:https://github.com/bosco-maker/instant-auto-roadrunner-quickstart.git'
+                    url = 'https://github.com/bosco-maker/instant-auto-roadrunner-quickstart'
+                }
+            }
+        }
+    }
+    
+    repositories {
+        maven {
+            name = 'localRepo'
+            url = 'file://' + new File(buildDir, 'repo').absolutePath
+        }
+        maven {
+            name = 'centralPortal'
+            url = 'https://central.sonatype.com/api/v1/publisher'
+            credentials {
+                username = System.getenv('hMTv1C')
+                password = System.getenv('1EfE0X1tpo0Q2QTefA0vcWqAJiCCcejEs')
+            }
+            authentication {
+                create(BasicAuthentication) // Central Portal uses basic auth with token as password
+            }
+        }
+    }
+}
+
+// Signing configuration (only activate when GPG key is available)
+signing {
+    if (project.hasProperty('signing.keyId') && project.hasProperty('signing.password') && project.hasProperty('signing.secretKeyRingFile')) {
+        sign publishing.publications.mavenJava
+    }
+}
+
+// Javadoc configuration
+javadoc {
+    options.encoding = 'UTF-8'
 }
 
 dependencies {

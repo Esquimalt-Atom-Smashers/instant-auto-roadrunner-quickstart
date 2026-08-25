@@ -23,6 +23,10 @@ out/
 # Gradle files
 .gradle/
 build/
+gradle.properties.local
+local.properties
+*.keystore
+*.jks
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -82,3 +86,19 @@ lint/tmp/
 
 .DS_Store
 /.idea
+
+# ============================================================
+# Publishing / Security (prevent leaking secrets)
+# ============================================================
+*.gpg
+*.asc
+secring.gpg
+pubring.gpg
+*.keystore
+*.jks
+gradle.properties.local
+*.properties.local
+!gradle.properties
+!build.gradle
+!settings.gradle
+!gradle/wrapper/gradle-wrapper.properties
