@@ -1,0 +1,5 @@
+autoTimer = 0.0
+redGoalPose = pose2d(-72, 48, 0)
+blueGoalPose = pose2d(72, 48, 0)
+motorName = "driveMotor"
+gamepadLeftY = 0.0

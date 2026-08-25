@@ -70,14 +70,14 @@ public class ConfigParser {
             //if return null, it is a simple type
             Object parsedValue = convertSimpleType(value, entry.type, lineNumber);
             if (parsedValue != null) {
-                updateEntryValue(entry, parsedValue);
+                updateStaticEntryValue(entry, parsedValue);
             }
             return;
         }
         //if not null, it is a user-defined type
         Object parsedValue = parseMetaFieldValue(value, typeDef, lineNumber);
         if (parsedValue != null) {
-            updateEntryValue(entry, parsedValue);
+            updateStaticEntryValue(entry, parsedValue);
         }
     }
 
@@ -139,6 +139,8 @@ public class ConfigParser {
                 return Double.parseDouble(val);
             } else if (type == Integer.class || type == int.class) {
                 return Integer.parseInt(val);
+            } else if (type == Long.class || type == long.class) {
+                return Long.parseLong(val);
             } else if (type == Boolean.class || type == boolean.class) {
                 if (val.equalsIgnoreCase("true")) return true;
                 if (val.equalsIgnoreCase("false")) return false;
@@ -156,9 +158,32 @@ public class ConfigParser {
         return null;
     }
 
+    public void userUpdateStaticEntry(String fieldName, Object newValue) {
+        MetaFieldRegistry.ConfigEntry<?> entry = MetaFieldRegistry.getEntry(fieldName);
+        if (entry == null) {
+            //if not, do nothing
+            return;
+        }
+        //Get if the variable is a simple type or a user-defined type
+        MetaField<?> typeDef = MetaFieldRegistry.getTypeDefinition(entry.type);
+        if (typeDef == null) {
+            //if return null, it is a simple type
+            Object parsedValue = convertSimpleType(newValue.toString(), entry.type, 0);
+            if (parsedValue != null) {
+                updateStaticEntryValue(entry, parsedValue);
+            }
+            return;
+        }
+        //if not null, it is a user-defined type
+        Object parsedValue = parseMetaFieldValue(newValue.toString(), typeDef, 0);
+        if (parsedValue != null) {
+            updateStaticEntryValue(entry, parsedValue);
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    private <T> void updateEntryValue(MetaFieldRegistry.ConfigEntry<T> entry, Object newValue) {
-        entry.value = (T) newValue;
+    private <T> void updateStaticEntryValue(MetaFieldRegistry.ConfigEntry<T> entry, Object newValue) {
+        entry.setValue((T) newValue);
     }
     
     private void addLocalVariables(String key, String value, int lineNumber) {
