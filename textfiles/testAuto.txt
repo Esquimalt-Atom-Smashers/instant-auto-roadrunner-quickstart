@@ -1,0 +1,8 @@
+Title = Test Autonomous
+Starting = pose2d(0, 0, 0)
+
+STRAFE.TO(30, 0, 0)
+STRAFE.TO(30, 30, 90)
+STRAFE.TO(0, 30, 180)
+STRAFE.TO(0, 0, 270)
+STRAFE.TO(0, 0, 0)

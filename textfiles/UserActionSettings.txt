@@ -1,0 +1,2 @@
+// Meta actions can be defined here
+// Example: SQUARE = STRAFE.TO(10,0,0), STRAFE.TO(10,10,0), STRAFE.TO(0,10,0), STRAFE.TO(0,0,0)

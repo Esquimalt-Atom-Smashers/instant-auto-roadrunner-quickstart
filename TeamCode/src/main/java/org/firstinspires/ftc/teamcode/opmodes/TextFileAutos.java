@@ -22,8 +22,8 @@ public class TextFileAutos {
     public static void register(OpModeManager manager) {
         AutoParser autoParser = new AutoParser(TextFileLocationBook.robotSettingFilePath, TextFileLocationBook.userActionSettingFilePath);
 
-        // 1. Scan for [ACTIVE] files
-        List<File> activeAutos = autoParser.findActiveAutos(TextFileLocationBook.robotSettingFilePath);
+        // 1. Scan for ACTIVE files
+        List<File> activeAutos = autoParser.findActiveAutos(TextFileLocationBook.FILE_LOCATION);
 
         for (File auto: activeAutos) {
             manager.register(metaForClass(auto.getName()), new AutonomousBase(autoParser, auto));
@@ -32,7 +32,7 @@ public class TextFileAutos {
 
     private static OpModeMeta metaForClass(String autoFileName) {
         return new OpModeMeta.Builder()
-                .setName(autoFileName.replace("[ACTIVE]", ""))
+                .setName(autoFileName.replace("ACTIVE", ""))
                 .setGroup(GROUP)
                 .setFlavor(OpModeMeta.Flavor.AUTONOMOUS)
                 .build();
