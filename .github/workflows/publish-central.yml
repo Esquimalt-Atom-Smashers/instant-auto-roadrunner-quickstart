@@ -69,3 +69,20 @@ jobs:
         run: |
           echo "Publication completed. Check https://central.sonatype.com for status"
           echo "Search at https://search.maven.org after ~30 minutes"
+
+      - name: Upload staging repository to Central Portal
+        run: |
+          curl --fail-with-body \
+            -X POST \
+            -H "Authorization: Bearer $(printf '%s:%s' \
+              "${CENTRAL_PORTAL_USERNAME}" \
+              "${CENTRAL_PORTAL_TOKEN}" | base64 -w 0)" \
+            "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/io.github.bosco-maker?publishing_type=automatic"
+        env:
+          CENTRAL_PORTAL_USERNAME: ${{ secrets.CENTRAL_PORTAL_USERNAME }}
+          CENTRAL_PORTAL_TOKEN: ${{ secrets.CENTRAL_PORTAL_TOKEN }}
+
+      - name: Verify publication
+        run: |
+          echo "Deployment submitted to Maven Central."
+          echo "Check https://central.sonatype.com/publishing"
