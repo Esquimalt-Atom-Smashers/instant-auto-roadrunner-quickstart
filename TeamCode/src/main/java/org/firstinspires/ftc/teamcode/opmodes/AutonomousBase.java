@@ -115,7 +115,6 @@ public class AutonomousBase extends OpMode {
     @Override
     public void loop() {
         dumpAllFields();
-        telemetry.addData("withinDistance", UserActionRegistry.evaluateCondition("withinDistance"));
         telemetry.update();
     }
     @Override

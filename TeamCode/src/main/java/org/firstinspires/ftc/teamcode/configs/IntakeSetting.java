@@ -4,6 +4,10 @@ import com.example.instantauto.configs.MetaField;
 
 import java.util.Locale;
 
+/**
+ * Example configuration class for intake settings.
+ * This is a template - customize for your robot's intake mechanism.
+ */
 public class IntakeSetting implements MetaField<IntakeSetting> {
     public final String mode;
     public final boolean isActive;
