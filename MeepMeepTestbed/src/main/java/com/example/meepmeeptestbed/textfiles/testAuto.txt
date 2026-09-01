@@ -1,13 +1,4 @@
 Starting=pose2d(-24,0,0)
-STRAFE.TO(-30,0,0)
-withinDistance=true
-if(withinDistance){
-    RACE(
-    SPLINE.TO(0, 0, 0, 90, 270)
-    SPLINE.TO(40,0,0, 270, 90)
-    SPLINE.TO(Starting, 90, 180),
-    PRINT(sysTime)
-    )
-}else{
-    STRAFE.TO(-24,0,0)
-}
+STRAFE.TO(parkPose),
+SPLINE.TO(32, 12, 0, 90, 270)
+SPLINE.TO(52, 12, 180, 270, 90)
